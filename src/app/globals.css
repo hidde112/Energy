@@ -674,6 +674,154 @@ a {
   font-weight: 800;
 }
 
+.empty-state {
+  padding: 2rem;
+  border: 1px dashed var(--border);
+  border-radius: 1.2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.collection-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.collection-item {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.4rem;
+  background: var(--surface);
+}
+
+.collection-item > .product-card {
+  border: 0;
+  border-radius: 0;
+}
+
+.collection-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.collection-controls > div {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.icon-button {
+  display: inline-flex;
+  min-height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.rating-page {
+  width: min(100%, 40rem);
+  margin: 6vh auto;
+}
+
+.rating-page > h1 {
+  margin: 0.45rem 0;
+  font-size: clamp(2.5rem, 9vw, 5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.rating-page > p:not(.eyebrow) {
+  color: var(--text-muted);
+}
+
+.rating-form {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+  padding: clamp(1.3rem, 4vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--surface);
+}
+
+.rating-form > label:not(.check-field) {
+  font-weight: 800;
+}
+
+.rating-form label span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.rating-form textarea {
+  resize: vertical;
+}
+
+.rating-form textarea,
+.rating-input {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit;
+}
+
+.rating-form textarea {
+  padding: 0.8rem;
+}
+
+.rating-input {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.9rem;
+  color: var(--lime);
+}
+
+.rating-input input {
+  width: 5rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.check-field input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--lime);
+}
+
+.form-success {
+  margin: 0;
+  color: var(--lime);
+  font-size: 0.85rem;
+}
+
 @media (min-width: 52rem) {
   .app-shell {
     display: grid;
@@ -782,6 +930,10 @@ a {
   .product-detail > .product-card {
     grid-row: span 2;
     grid-template-columns: 1fr;
+  }
+
+  .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
