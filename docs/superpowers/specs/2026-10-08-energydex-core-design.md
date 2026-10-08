@@ -1,7 +1,7 @@
 # ENERGYDEX Core Release Design
 
 Date: 2026-10-08
-Status: Approved conversational design; written specification pending final review
+Status: Approved for implementation
 
 ## 1. Purpose
 
