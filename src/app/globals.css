@@ -37,6 +37,7 @@
 
 html {
   background: var(--background);
+  overflow-x: hidden;
 }
 
 body {
@@ -64,6 +65,7 @@ body {
     "Segoe UI",
     sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -1083,6 +1085,97 @@ a {
   border: 1px solid var(--border);
   border-radius: 1rem;
   background: var(--surface);
+}
+
+.dashboard,
+.dashboard-empty {
+  margin-top: 1rem;
+  padding: clamp(1.3rem, 4vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 1.6rem;
+  background: var(--surface);
+}
+
+.dashboard-empty h2,
+.dashboard-heading h2 {
+  margin: 0.4rem 0;
+  font-size: clamp(1.8rem, 5vw, 3.3rem);
+  letter-spacing: -0.05em;
+}
+
+.dashboard-empty > p:not(.eyebrow) {
+  max-width: 40rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-heading a {
+  color: var(--lime);
+  font-weight: 800;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 1.3rem 0;
+}
+
+.dashboard-stats > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+  padding: 0.8rem;
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+}
+
+.dashboard-stats svg {
+  color: var(--lime);
+}
+
+.dashboard-stats dt {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+}
+
+.dashboard-stats dd {
+  margin: 0;
+  font-size: clamp(1.3rem, 6vw, 2.1rem);
+  font-weight: 950;
+}
+
+.recent-products {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.recent-products a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.8rem;
+  background: var(--surface-elevated);
+}
+
+.recent-products span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.offline-state > svg {
+  color: var(--orange);
 }
 
 @media (min-width: 52rem) {

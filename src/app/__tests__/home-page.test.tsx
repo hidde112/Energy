@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("introduces ENERGYDEX and its purpose", () => {
-    render(<HomePage />);
+  it("introduces ENERGYDEX and its purpose", async () => {
+    render(await HomePage());
 
     expect(
       screen.getByRole("heading", { name: "ENERGYDEX" }),

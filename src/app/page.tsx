@@ -1,7 +1,26 @@
 import Link from "next/link";
 import { ArrowRight, ScanLine, ShieldCheck, Sparkles } from "lucide-react";
+import { Dashboard } from "@/features/dashboard/components/dashboard";
+import {
+  emptyDashboard,
+  getDashboard,
+} from "@/features/dashboard/server/dashboard-query";
+import { AppError } from "@/lib/errors/app-error";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  let summary = emptyDashboard;
+  try {
+    const client = await createServerSupabaseClient();
+    const auth = await client.auth.getUser();
+    if (auth.data.user) summary = await getDashboard(auth.data.user.id);
+  } catch (error) {
+    if (!(error instanceof AppError) || error.code !== "CONFIGURATION_MISSING")
+      throw error;
+  }
+
   return (
     <div className="home-page">
       <header className="mobile-header">
@@ -60,6 +79,8 @@ export default function HomePage() {
           </div>
         </article>
       </section>
+
+      <Dashboard summary={summary} />
     </div>
   );
 }
