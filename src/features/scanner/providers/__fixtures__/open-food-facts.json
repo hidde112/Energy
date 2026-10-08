@@ -1,0 +1,16 @@
+{
+  "status": 1,
+  "code": "9002490100070",
+  "product": {
+    "product_name": "Red Bull Energy Drink",
+    "brands": "Red Bull",
+    "quantity": "250 ml",
+    "image_front_url": "https://images.openfoodfacts.org/red-bull.jpg",
+    "ingredients_text": "Water, sucrose, glucose, caffeine",
+    "nutriments": {
+      "caffeine_100ml": 0.032,
+      "sugars_100g": 11,
+      "energy-kcal_100g": 45
+    }
+  }
+}
