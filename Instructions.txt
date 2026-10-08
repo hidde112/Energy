@@ -1,0 +1,1101 @@
+# PROJECT: ENERGYDEX — AI-Powered Energy Drink Collector & Social Platform
+
+## 1. JOUW ROL EN DOEL
+
+Je bent een team van senior full-stack developers, UI/UX-designers, databasearchitecten, security engineers en AI-engineers.
+
+Bouw een complete, productiegerichte webapplicatie genaamd **ENERGYDEX**.
+
+Slogan: **Scan it. Rate it. Collect it.**
+
+ENERGYDEX is een moderne, sociale verzamelapp voor energydrankjes. Gebruikers kunnen blikjes scannen met hun telefooncamera, automatisch laten identificeren door AI, producten verzamelen, beoordelen, vergelijken en delen met vrienden.
+
+De applicatie moet aanvoelen als een hoogwaardige native mobiele app en visueel vergelijkbaar zijn met een professioneel consumentenproduct.
+
+Bouw geen statische demo, mock-up of verzameling niet-werkende schermen. Implementeer werkende end-to-endfunctionaliteit, inclusief database, authenticatie, API's, opslag, AI-integratie en een echte mobiele gebruikerservaring.
+
+Neem zelfstandig verstandige architectuur- en ontwerpbeslissingen. Vermijd onnodige vragen. Documenteer aannames.
+
+Werk gestructureerd in fases, maar werk daadwerkelijk door aan de implementatie. Houd een voortgangsdocument bij met voltooide onderdelen, openstaande taken en eventuele configuratievereisten.
+
+## 2. TECHNISCHE ARCHITECTUUR
+
+Gebruik bij voorkeur:
+
+- Next.js met App Router en TypeScript
+- React
+- Tailwind CSS
+- shadcn/ui
+- Framer Motion of Motion voor animaties
+- Lucide Icons
+- Supabase voor PostgreSQL, authenticatie, realtime en storage
+- Vercel voor deployment
+- OpenAI API voor multimodale beeldherkenning en aanbevelingen
+- Open Food Facts API voor productgegevens en barcodes
+- Een betrouwbare barcode-scanner met ondersteuning voor EAN-8, EAN-13 en UPC
+- Recharts voor statistieken
+- TanStack Query waar nuttig
+- Zod voor inputvalidatie
+- PWA-ondersteuning met service worker, manifest en installatiemogelijkheid
+
+Gebruik recente stabiele versies die onderling compatibel zijn.
+
+Maak een goed gestructureerde codebase met herbruikbare componenten, duidelijke scheiding tussen client en server, typeveiligheid en centrale foutafhandeling.
+
+De applicatie moet op iOS Safari, Android Chrome en desktop werken.
+
+Maak de interface mobile-first. De belangrijkste bediening moet met één hand bereikbaar zijn.
+
+De applicatie moet op Vercel kunnen draaien.
+
+## 3. DESIGN SYSTEM
+
+Ontwerp ENERGYDEX als een premium dark-mode app.
+
+Visuele stijl:
+- Donkere achtergrond: charcoal / bijna zwart
+- Accentkleur: electric lime / neon groen
+- Secundaire accenten: subtiel paars, cyaan en oranje
+- Luxe kaarten en duidelijke visuele hiërarchie
+- Grote productafbeeldingen
+- Moderne typografie
+- Afgeronde hoeken
+- Subtiele gradients
+- Fraaie micro-interacties
+- Smooth screen transitions
+- Skeleton loading
+- Geanimeerde statistieken
+- Confetti bij nieuwe achievements
+- Haptische feedback waar ondersteund
+
+Het design moet energiek en aantrekkelijk zijn zonder rommelig te worden.
+
+Maak zowel dark mode als light mode, maar gebruik dark mode standaard.
+
+Gebruik geen overmatige glassmorphism of decoratieve effecten die de leesbaarheid verminderen.
+
+### Navigatie mobiel
+
+Vaste onderste navigatie met:
+
+1. Home
+2. Discover
+3. Scan (prominente centrale knop)
+4. Collection
+5. Friends
+
+Profiel en instellingen bereikbaar via de header.
+
+Desktop krijgt een overzichtelijke sidebar en dashboard-layout.
+
+Maak alle schermen responsive, inclusief veilige marges voor iPhone-notch en home indicator.
+
+## 4. ACCOUNTS EN AUTHENTICATIE
+
+De app moet eenvoudig toegankelijk zijn voor een kleine vriendengroep.
+
+Functionaliteit:
+- Snelle onboarding
+- Automatisch een persoonlijke identiteit aanmaken voor nieuwe bezoekers via een beveiligde guest/anonymous-auth-flow
+- Geen wachtwoord verplicht om de app uit te proberen
+- Gebruikersnaam instellen
+- Profielfoto uploaden
+- Unieke openbare profielidentiteit
+- Optioneel e-mailadres koppelen voor herstel
+- Account upgraden naar permanent account zonder verlies van gegevens
+- Inloggen op meerdere apparaten
+- Sessiebeheer
+- Uitloggen op andere apparaten
+- Account verwijderen
+- Gegevens exporteren
+
+### IP-herkenning
+
+IP-adressen mogen NIET als primaire accountidentiteit worden gebruikt.
+
+Gebruik veilige sessies en apparaatgebonden persistentie zodat de gebruiker automatisch wordt herkend.
+
+IP-informatie mag uitsluitend voor noodzakelijke beveiliging of misbruikdetectie worden gebruikt, met passende privacymaatregelen.
+
+### App lock
+
+Implementeer optionele:
+- 4- of 6-cijferige app-pincode
+- Biometrische ontgrendeling waar technisch ondersteund
+- Face ID / Touch ID / Android via platform-passkeys of geschikte native mogelijkheden
+- Automatisch vergrendelen na instelbare periode
+- Handmatig vergrendelen
+- Herstelprocedure
+
+Gebruik WebAuthn/passkeys voor daadwerkelijke authenticatie waar ondersteund.
+
+Sla pincodes nooit in plaintext op. Gebruik een veilige server-side verificatiemethode met rate limiting en bescherming tegen brute-forceaanvallen.
+
+Maak onderscheid tussen accountauthenticatie en een lokale privacyvergrendeling. Claim geen biometrische functionaliteit die de browser niet daadwerkelijk ondersteunt.
+
+## 5. AI ENERGY DRINK SCANNER — BELANGRIJKSTE FUNCTIE
+
+Dit is de kern van de applicatie. Geef hier extra aandacht aan.
+
+### Gewenste gebruikerservaring
+
+1. Gebruiker opent Scan.
+2. De achtercamera opent.
+3. Gebruiker richt camera op een energydrankblikje.
+4. De applicatie detecteert een barcode of analyseert een foto.
+5. AI herkent het blikje.
+6. De app toont automatisch productnaam, merk, smaak, variant, inhoud, afbeelding en overige gegevens.
+7. Gebruiker bevestigt het resultaat.
+8. Gebruiker beoordeelt het drankje of voegt het toe aan de collectie.
+
+De gebruiker mag niet verplicht worden om handmatig merk en smaak in te voeren.
+
+### Identificatiepipeline
+
+Implementeer een hybride aanpak:
+
+**Stap A — Barcodeherkenning**
+
+Probeer eerst de barcode te detecteren.
+
+Zoek in:
+1. Interne productdatabase
+2. Interne barcode-index
+3. Open Food Facts
+4. Eventuele aanvullende betrouwbare databronnen
+
+**Stap B — AI-beeldherkenning**
+
+Als de barcode ontbreekt of geen resultaat oplevert:
+
+Gebruik multimodale AI om de afbeelding te analyseren.
+
+Herken:
+- Brand
+- Productnaam
+- Smaak
+- Productlijn
+- Regular / Zero / Sugar Free
+- Speciale editie
+- Geschat blikformaat
+- Leesbare tekst op het blikje
+- Visuele kenmerken
+- Eventuele barcode
+- Land of regionale variant indien aantoonbaar
+
+Laat het model gestructureerde JSON teruggeven volgens een Zod-schema.
+
+**Stap C — Matching**
+
+Vergelijk de AI-resultaten met de interne database.
+
+Gebruik:
+- Genormaliseerde productnamen
+- Merkherkenning
+- Aliassen
+- Barcode
+- Variant
+- Smaak
+- Embedding- of fuzzy matching waar nuttig
+
+Voorkom dubbele producten met alternatieve schrijfwijzen.
+
+**Stap D — Confidence scoring**
+
+Bereken een betrouwbare confidence score.
+
+- Hoge betrouwbaarheid: toon direct voorgesteld product.
+- Gemiddelde betrouwbaarheid: laat gebruiker kiezen uit maximaal drie kandidaten.
+- Lage betrouwbaarheid: bied een snelle correctiemogelijkheid en eventueel een extra foto.
+
+Verzin nooit met zekerheid een product dat niet betrouwbaar herkend is.
+
+**Stap E — Product automatisch registreren**
+
+Als een product nog niet bestaat:
+
+- Maak een voorlopig productrecord.
+- Sla de herkende informatie op.
+- Zoek aanvullende metadata.
+- Markeer onzekere velden.
+- Laat bevestiging of correctie toe.
+- Voeg het na bevestiging toe aan de globale database.
+
+### Camera UX
+
+- Live camera preview
+- Scanframe met animatie
+- Automatische scherpstelondersteuning waar beschikbaar
+- Zaklampknop indien ondersteund
+- Voor- en achterkant scannen
+- Afbeelding uploaden vanuit galerij
+- Handmatige barcode-invoer als fallback
+- Camerafout netjes afhandelen
+- Duidelijke permissie-instructies
+- Duplicaatdetectie
+- Scan-geschiedenis
+
+### Kostenoptimalisatie
+
+Gebruik AI niet onnodig.
+
+Bij een bekende barcode moet geen dure vision-call nodig zijn.
+
+Cache succesvolle identificaties en normaliseer resultaten.
+
+Gebruik limieten, validatie en abuse prevention.
+
+## 6. AUTOMATISCHE PRODUCTAFBEELDINGEN
+
+Iedere energy drink moet een duidelijke productafbeelding krijgen.
+
+Voorkeursvolgorde:
+1. Geverifieerde afbeelding uit de interne database
+2. Productafbeelding uit een toegestane product-API
+3. Officiële afbeelding van de fabrikant via een toegestane bron
+4. Een andere bron waarvoor opslag en weergave zijn toegestaan
+5. Eigen, door gebruikers geüploade productfoto
+6. Een nette placeholder
+
+Gebruik waar mogelijk geïsoleerde productafbeeldingen met een transparante achtergrond.
+
+Zoek niet simpelweg willekeurige Google Images en scrape geen beschermde afbeeldingen.
+
+Gebruik officiële API's of bronnen die hergebruik toestaan. Leg broninformatie en eventuele licentievoorwaarden vast.
+
+Google-zoekresultaten mogen worden gebruikt via een officieel beschikbare zoek-API, indien geconfigureerd.
+
+Voorkom:
+- Verkeerde afbeeldingen
+- Afbeeldingen van oude varianten
+- Duplicaten
+- Vervormde productverhoudingen
+- Gebroken afbeeldingslinks
+
+Voeg een beheerfunctie toe voor het corrigeren van productafbeeldingen.
+
+## 7. GLOBALE PRODUCTDATABASE
+
+Bouw een centrale energy drink catalogus.
+
+Ondersteun onder andere:
+- Monster Energy
+- Red Bull
+- Rockstar
+- Reign
+- Bang
+- Celsius
+- Nocco
+- C4
+- Prime Energy
+- Hell
+- Burn
+- Effect
+- Golden Power
+- Kong Strong
+- Huismerken
+- Overige internationale merken
+
+Hardcode geen beperkte lijst als enige mogelijke producten.
+
+### Productgegevens
+
+Voor ieder product:
+- Product-ID
+- Merk
+- Productnaam
+- Smaak
+- Productlijn
+- EAN/UPC
+- Inhoud in ml
+- Categorie
+- Subcategorie
+- Suikervrij ja/nee
+- Cafeïne per 100 ml
+- Totale cafeïne per blikje
+- Suiker per 100 ml
+- Calorieën
+- Zoetstoffen indien bekend
+- Land van herkomst
+- Regionale beschikbaarheid
+- Limited edition-status
+- Discontinued-status
+- Jaar van introductie indien bekend
+- Ingrediënten indien beschikbaar
+- Beschrijving
+- Officiële afbeelding
+- Bronvermelding
+- Alternatieve afbeeldingen
+- Alternatieve namen
+- Productverificatiestatus
+- Gemiddelde community-rating
+- Aantal beoordelingen
+- Aantal verzamelaars
+
+Alleen daadwerkelijk bevestigde gegevens mogen als feiten getoond worden. Ontbrekende voedingswaarden blijven onbekend in plaats van door AI verzonnen te worden.
+
+## 8. PERSOONLIJKE COLLECTIE
+
+Iedere gebruiker krijgt een eigen digitale blikjescollectie.
+
+Mogelijke productstatussen:
+- Tried
+- Want to try
+- Favorite
+- Disliked
+- Collected physically
+- Want to buy
+- Archived
+
+Maak duidelijk onderscheid tussen een product ooit geprobeerd hebben en het fysieke blikje bezitten.
+
+### Collectieweergaven
+
+- Visueel raster met blikjes
+- Compacte lijst
+- Merkenoverzicht
+- Verzamelalbum per merk
+- Favorieten
+- Wishlist
+- Recent toegevoegd
+- Zeldzame en limited editions
+
+Voeg sorteer- en filtermogelijkheden toe voor:
+- Merk
+- Smaak
+- Productlijn
+- Suikervrij
+- Cafeïnegehalte
+- Blikformaat
+- Land
+- Gemiddelde rating
+- Eigen rating
+- Populariteit
+- Datum toegevoegd
+- Limited edition
+- Nog niet geprobeerd
+- Door vrienden geprobeerd
+
+Ondersteun multi-select filters en het bewaren van favoriete filterinstellingen.
+
+### Collectieprogressie
+
+Toon bijvoorbeeld:
+
+Monster Ultra: 12 van 20 bekende producten geprobeerd.
+
+Bereken progressie op basis van een expliciet gedefinieerde catalogusselectie. Houd rekening met regionale varianten en onvolledige catalogi.
+
+## 9. BEOORDELINGEN EN REVIEWS
+
+Na het scannen kan de gebruiker het drankje beoordelen.
+
+### Ratings
+
+Gebruik een nauwkeurige beoordeling van 0,5 tot 10,0.
+
+Daarnaast optionele deelbeoordelingen:
+- Smaak
+- Zoetheid
+- Frisheid
+- Nasmaak
+- Verpakking/design
+- Prijs-kwaliteit
+
+Laat gebruikers optioneel kenmerken selecteren:
+- Fruitig
+- Zuur
+- Zoet
+- Citrus
+- Tropisch
+- Bessen
+- Cola
+- Watermeloen
+- Perzik
+- Appel
+- Mango
+- Overig
+
+Ondersteun:
+- Korte tekstreview
+- Foto's toevoegen
+- Datum van proeven
+- Locatie optioneel
+- Prijs optioneel
+- Winkel optioneel
+- Opnieuw proeven
+- Beoordeling aanpassen
+- Verschillende proefmomenten
+
+Een product kan meerdere proefmomenten hebben, maar krijgt één primaire actuele gebruikersrating, zodat gemiddelden niet worden vertekend.
+
+### Community reviews
+
+- Reviews van vrienden
+- Gemiddelde rating
+- Ratingsverdeling
+- Likes op reviews
+- Reacties
+- Spoiler-vrije blind taste tests
+- Review delen als mooie afbeelding
+
+## 10. VRIENDEN EN SOCIALE FUNCTIES
+
+Bouw een uitgebreid maar overzichtelijk sociaal systeem.
+
+### Vrienden toevoegen
+
+- Zoek op gebruikersnaam
+- Vriendschapsverzoeken
+- Unieke uitnodigingslink
+- QR-code om vrienden toe te voegen
+- Verzoeken accepteren of weigeren
+- Gebruikers blokkeren
+
+### Vriendenoverzicht
+
+Bekijk:
+- Hun collectie
+- Recent gescande blikjes
+- Nieuwe reviews
+- Favoriete merken
+- Hoogste ratings
+- Wishlist
+- Achievements
+- Statistieken
+
+### Activity feed
+
+Een tijdlijn met bijvoorbeeld:
+- Vriend heeft nieuw blikje geprobeerd
+- Vriend heeft 9,5 gegeven
+- Vriend heeft badge vrijgespeeld
+- Vriend heeft een nieuwe favoriet
+- Nieuwe review geplaatst
+
+Ondersteun likes, reacties en privacyinstellingen.
+
+### Collecties vergelijken
+
+Maak een vergelijking tussen twee personen:
+- Gedeelde producten
+- Alleen door mij geprobeerd
+- Alleen door vriend geprobeerd
+- Grootste beoordelingsverschillen
+- Overeenkomende favorieten
+- Smaakcompatibiliteit in procenten
+
+### Groepen
+
+Gebruikers kunnen groepen aanmaken:
+- Privégroep
+- Uitnodigingen
+- Groepsleaderboard
+- Groepsactiviteit
+- Groepscollectie
+- Maandelijkse challenges
+
+## 11. GAMIFICATION
+
+Maak verzamelen leuk en motiverend.
+
+### XP-systeem
+
+Ken XP toe voor betekenisvolle activiteiten:
+- Eerste unieke product
+- Nieuw merk
+- Nieuwe review
+- Compleet merkalbum
+- Eerste vriend toegevoegd
+- Nieuwe achievement
+
+Voorkom XP-farming door dezelfde handeling telkens te herhalen.
+
+### Levels
+
+Gebruikers krijgen een level met een voortgangsbalk.
+
+### Achievements
+
+Maak minstens 30 achievements, waaronder:
+- First Sip
+- Energy Rookie
+- 10 Unique Cans
+- 25 Unique Cans
+- 50 Unique Cans
+- 100 Unique Cans
+- Monster Hunter
+- Red Bull Explorer
+- Sugar Free Specialist
+- International Explorer
+- Flavor Expert
+- Collector Legend
+- Review Master
+- Social Taster
+
+Ontwerp badges met mooie iconen en verschillende zeldzaamheidsniveaus.
+
+### Leaderboards
+
+- Meeste unieke producten
+- Meeste merken
+- Meeste reviews
+- Hoogste level
+- Meeste badges
+- Meeste nieuwe ontdekkingen deze maand
+
+Leaderboards mogen geen excessieve cafeïneconsumptie belonen.
+
+Beloon diversiteit van reeds geprobeerde producten en collectieactiviteit, niet het aantal blikjes dat iemand op één dag drinkt.
+
+## 12. AI-SMAAKADVISEUR
+
+Voeg een AI-assistent toe als volwaardige functie.
+
+Naam: Energy AI.
+
+De AI krijgt via gecontroleerde serverfuncties toegang tot toegestane context:
+- Eigen collectie
+- Eigen ratings
+- Favoriete smaakprofielen
+- Beschikbare catalogus
+- Publieke of gedeelde reviews van vrienden
+- Trends
+- Productmetadata
+
+### Voorbeelden
+
+Gebruiker vraagt:
+
+"Welke Monster moet ik nog proberen?"
+
+AI analyseert welke Monster-smaken ontbreken en voorspelt welke waarschijnlijk goed aansluiten bij eerdere beoordelingen.
+
+"Welke energydrank vinden mijn vrienden lekker maar ik nog niet?"
+
+AI vergelijkt collecties.
+
+"Ik zoek iets zuurs, tropisch en zonder suiker."
+
+AI filtert de catalogus.
+
+"Waarom vind ik Monster Ultra White lekkerder dan Original?"
+
+AI kan smaakprofielen en eerdere beoordelingen vergelijken.
+
+"Welke smaken lijken op Red Bull Tropical?"
+
+AI geeft maximaal vijf relevante aanbevelingen.
+
+### AI-specificaties
+
+- Conversationele chatinterface
+- Suggested prompts
+- Productkaarten in antwoorden
+- Direct toevoegen aan wishlist
+- Personalisatie op basis van echte ratings
+- Retrieval uit database
+- Geen verzonnen producten
+- Correct omgaan met ontbrekende gegevens
+- Rate limiting
+- Server-side API-sleutels
+- Transparante uitleg van aanbevelingen
+
+Gebruik voor gepersonaliseerde aanbevelingen eerst deterministische filters en ranking. Zet het taalmodel vooral in voor interpretatie en uitleg.
+
+## 13. DISCOVER-PAGINA
+
+Maak een uitgebreide ontdekpagina.
+
+Secties:
+- Trending
+- Populair bij vrienden
+- Hoogst beoordeeld
+- Recent toegevoegd aan catalogus
+- Limited editions
+- Sugar free
+- Nieuwe merken ontdekken
+- Vergelijkbare smaken
+- Aanbevolen voor jou
+- Wishlist-aanbevelingen
+- Internationale producten
+
+Maak een krachtige zoekfunctie met autosuggest, filters en zoekgeschiedenis.
+
+Ondersteun zoeken op merk, smaak, kleur, naam, barcode en productlijn.
+
+## 14. DASHBOARD EN STATISTIEKEN
+
+Het dashboard moet direct nuttige inzichten tonen.
+
+### Home
+
+Bovenaan:
+- Persoonlijke begroeting
+- Huidig level
+- XP-voortgang
+- Aantal unieke producten
+- Aantal merken
+- Gemiddelde rating
+- Snelkoppeling naar Scan
+
+Daaronder:
+- Recent geprobeerd
+- Favoriete blikjes
+- Activiteit van vrienden
+- Collectievoortgang
+- Nieuwe aanbevelingen
+- Actieve challenges
+- Nog te proberen producten
+
+### Advanced stats
+
+Visualiseer:
+- Totale collectieontwikkeling
+- Unieke smaken per maand
+- Meest beoordeelde merken
+- Ratings per merk
+- Favoriete smaakcategorieën
+- Sugar free versus regular
+- Cafeïneverdeling van geprobeerd assortiment
+- Top 10 beste blikjes
+- Top 10 slechtste blikjes
+- Ontwikkeling van smaakvoorkeur
+- Vergelijking met vrienden
+- Reviews per maand
+
+Maak filters voor verschillende perioden.
+
+### Jaaroverzicht
+
+Bouw een Spotify Wrapped-achtige functie:
+
+"Your Energy Year"
+
+Met:
+- Aantal unieke ontdekkingen
+- Favoriete merk
+- Favoriete smaak
+- Beste ontdekking
+- Slechtste rating
+- Meest vergelijkbare vriend
+- Persoonlijk smaakprofiel
+- Visuele deelbare slides
+
+## 15. BLIND TASTE TEST
+
+Maak een speciale modus.
+
+Gebruiker kan vooraf een aantal producten selecteren en voorzien van neutrale codes.
+
+Bij het proeven worden productnamen verborgen.
+
+Gebruiker beoordeelt de smaak zonder merk of verpakking te zien.
+
+Na het afronden worden de producten onthuld.
+
+Ondersteun meerdere vrienden in één sessie.
+
+Toon resultaten:
+- Hoogste blind rating
+- Grootste verrassing
+- Verschil tussen normale en blinde beoordeling
+- Groepsfavoriet
+
+## 16. WISHLIST EN DISCOVERY TRACKING
+
+Gebruikers kunnen producten toevoegen aan een wishlist.
+
+Opties:
+- Prioriteit
+- Notitie
+- Waar gezien
+- Geschatte prijs
+- Beschikbaarheid als die betrouwbaar bekend is
+- Wishlist delen
+- Vergelijken met vrienden
+
+Voeg optioneel een functie toe om winkels vast te leggen waar gebruikers producten aantroffen, zonder te suggereren dat dit realtime voorraadgegevens zijn.
+
+## 17. NOTIFICATIES
+
+Implementeer een notificatiecentrum.
+
+Voorbeelden:
+- Vriendschapsverzoek
+- Nieuwe review van vriend
+- Reactie op review
+- Nieuwe achievement
+- Groepschallenge
+- Nieuw catalogusproduct binnen een gevolgd merk
+- Product op wishlist gesignaleerd
+
+Ondersteun pushnotifications waar PWA/browser en permissies dit toelaten.
+
+Maak notificatie-instellingen per categorie.
+
+## 18. PROFIEL
+
+Iedere gebruiker krijgt een fraai profiel.
+
+Toon:
+- Avatar
+- Gebruikersnaam
+- Bio
+- Level
+- XP
+- Achievements
+- Aantal unieke blikjes
+- Aantal merken
+- Gemiddelde rating
+- Favoriet blikje
+- Top 3 merken
+- Collectie
+- Reviews
+- Wishlist
+
+Maak privacyopties:
+- Openbaar
+- Alleen vrienden
+- Privé
+
+Vereis toegangstoestemming voor afgeschermde gegevens.
+
+## 19. ADMIN DASHBOARD
+
+Maak een afgeschermde adminomgeving.
+
+Adminfunctionaliteit:
+- Producten beheren
+- Duplicaten samenvoegen
+- Barcodes corrigeren
+- Productfoto's wijzigen
+- Merken beheren
+- Smaakcategorieën beheren
+- Productvoorstellen goedkeuren
+- Gebruikers beheren
+- Gemelde content bekijken
+- Analytics
+- AI-gebruik en geschatte kosten bekijken
+- API-fouten inspecteren
+- Beperkingen configureren
+
+Gebruik role-based access control en controleer autorisaties op de server.
+
+## 20. DATABASEONTWERP
+
+Ontwerp een volledig relationeel PostgreSQL-schema.
+
+Verwachte entiteiten zijn onder andere:
+
+- profiles
+- user_settings
+- brands
+- products
+- product_aliases
+- product_barcodes
+- product_images
+- product_sources
+- product_categories
+- flavor_tags
+- product_flavors
+- user_collections
+- tasting_sessions
+- reviews
+- review_reactions
+- review_comments
+- friendships
+- friend_requests
+- groups
+- group_members
+- group_invitations
+- activity_events
+- achievements
+- user_achievements
+- xp_events
+- challenges
+- challenge_participants
+- wishlists
+- scans
+- scan_candidates
+- ai_recommendations
+- notifications
+- reports
+- audit_logs
+
+Pas het schema aan wanneer een betere normalisatie gewenst is.
+
+Maak migrations, indexes, foreign keys, constraints en policies.
+
+Gebruik Row Level Security op alle tabellen met gebruikersdata.
+
+Maak server-side functies of policies voor vriendenprivacy en groepsrechten.
+
+Maak efficiënte queries voor collectieoverzichten, zoekfunctionaliteit en statistieken.
+
+Voorkom N+1 queries.
+
+## 21. PERFORMANCE
+
+De app moet snel aanvoelen.
+
+Implementeer:
+- Image optimization
+- Lazy loading
+- Route-level loading states
+- Caching
+- Server-side pagination
+- Optimistic updates
+- Debounced search
+- Virtualization bij grote collecties indien nodig
+- Database-indexering
+- Offline cache voor eerder bekeken collecties
+- Offline queue voor veilige lokale wijzigingen
+- Correcte synchronisatie bij opnieuw verbinden
+
+Voorkom grote initiële JavaScript-bundles.
+
+## 22. SECURITY EN PRIVACY
+
+Gebruik veilige software-engineeringprincipes.
+
+Verplicht:
+- Server-side autorisatie
+- Supabase RLS
+- Inputvalidatie
+- Rate limiting
+- CSRF-bescherming waar relevant
+- XSS-preventie
+- Veilige fileuploads
+- Maximale uploadgroottes
+- MIME- en bestandstypevalidatie
+- Geen API-keys in clientbundles
+- Geen open storage buckets voor privéfoto's
+- Veilig sessiebeheer
+- Audit logging van administratieve acties
+- Accountverwijdering
+- Data-export
+- Privacyvriendelijke analytics
+
+Sla biometrische gegevens nooit zelf op.
+
+Maak duidelijk onderscheid tussen openbare catalogusgegevens en privégebruikersgegevens.
+
+Houd rekening met AVG/GDPR.
+
+## 23. AI-BETROUWBAARHEID
+
+AI moet nuttig zijn maar nooit zonder controle gegevens verzinnen.
+
+Specifieke vereisten:
+- Strict structured output
+- Zod-validatie
+- Confidence-indicaties
+- Bronregistratie
+- Retry- en foutafhandeling
+- Budgetlimieten
+- Caching
+- Prompt-injectionbestendige verwerking van externe producttekst
+- Menselijke correctie
+- Monitoring van scanresultaten
+
+Alle externe tekst en beeldinhoud zijn onbetrouwbare input.
+
+Voorkom dat gebruikers via de AI toegang krijgen tot andermans privégegevens.
+
+## 24. EXTRA FEATURES
+
+Implementeer indien haalbaar:
+
+1. Deelbare collectiekaarten
+2. QR-code voor gebruikersprofielen
+3. Producten naast elkaar vergelijken
+4. Favorietenbattle: gebruiker kiest tussen twee blikjes
+5. Smaakcompatibiliteit tussen vrienden
+6. Offline scanhistorie
+7. Collectie-import via CSV
+8. Collectie-export als JSON/CSV
+9. Visuele producttijdlijn
+10. Limited edition-verzameling
+11. Merk-specifieke achievements
+12. Personalisatie van startpagina
+13. Geavanceerde zoekfilters
+14. Internationale catalogus
+15. Nederlandse en Engelse taal
+16. Optionele profielthema's
+17. Mini-quiz over energydrankmerken
+18. AI-generatie van persoonlijk smaakprofiel
+19. Productcorrecties door community
+20. Productmeldingen en moderatie
+
+## 25. TESTEN
+
+Maak tests voor:
+
+- Authenticatie
+- Profielaanmaak
+- Accountupgrade
+- RLS en toegangsrechten
+- Vriendverzoeken
+- Productidentificatie
+- Barcode-matching
+- AI-outputvalidatie
+- Duplicaatpreventie
+- Reviews
+- Collecties
+- Wishlist
+- Achievements
+- Leaderboards
+- Adminrechten
+
+Voeg Playwright end-to-end tests toe voor de belangrijkste gebruikersflows.
+
+Test mobiel gedrag.
+
+Maak geautomatiseerde checks voor TypeScript, linting en builds.
+
+Gebruik mocks uitsluitend in tests en expliciete demo-omgevingen.
+
+## 26. ENVIRONMENT EN DEPLOYMENT
+
+Maak:
+- .env.example
+- README.md
+- SETUP.md
+- DATABASE.md
+- AI_PIPELINE.md
+- PROJECT_PROGRESS.md
+
+Documenteer alle benodigde environment variables.
+
+Maak de app deploybaar op Vercel.
+
+Gebruik Supabase als primaire backend.
+
+Voorzie in nette foutmeldingen als een externe API of configuratie ontbreekt.
+
+Implementeer geen schijnbaar werkende functies die in werkelijkheid geen gegevens opslaan.
+
+## 27. IMPLEMENTATIEVOLGORDE
+
+Bouw in deze volgorde:
+
+### Fase 1 — Fundament
+- Projectsetup
+- Design system
+- Navigatie
+- Database
+- Auth
+- Profiel
+- PWA
+
+### Fase 2 — Core product
+- Productdatabase
+- Productdetails
+- Barcode-scanner
+- AI-beeldherkenning
+- Productmatching
+- Automatische afbeeldingen
+- Scanbevestiging
+
+### Fase 3 — Persoonlijke collectie
+- Collectie
+- Ratings
+- Reviews
+- Wishlist
+- Filters
+- Zoeken
+
+### Fase 4 — Sociale features
+- Vrienden
+- Profielen
+- Activity feed
+- Reviews en reacties
+- Vergelijkingen
+- Groepen
+
+### Fase 5 — AI en gamification
+- Energy AI
+- Aanbevelingen
+- Achievements
+- XP
+- Levels
+- Leaderboards
+- Challenges
+
+### Fase 6 — Analytics en extra's
+- Dashboard
+- Advanced stats
+- Blind taste tests
+- Jaaroverzicht
+- Notifications
+- Admin dashboard
+
+### Fase 7 — Production hardening
+- Tests
+- Security
+- Accessibility
+- Performance
+- Responsive polish
+- Deployment
+- Documentatie
+
+Gebruik een duidelijke takenlijst en houd bij welke onderdelen aantoonbaar werken.
+
+## 28. ACCEPTATIECRITERIA
+
+Het project is pas klaar wanneer de belangrijkste workflows end-to-end functioneren.
+
+Een gebruiker moet daadwerkelijk:
+
+1. De webapp kunnen openen op iPhone of Android.
+2. Een account kunnen aanmaken.
+3. Een gebruikersnaam kunnen kiezen.
+4. De app op het beginscherm kunnen installeren.
+5. De camera kunnen openen.
+6. Een barcode kunnen scannen.
+7. Een blikje via een foto door AI laten identificeren.
+8. De voorgestelde productgegevens kunnen controleren.
+9. Een product aan de collectie kunnen toevoegen.
+10. Een beoordeling kunnen geven.
+11. Zijn collectie kunnen filteren.
+12. Een vriend kunnen toevoegen.
+13. De collectie en reviews van die vriend kunnen bekijken als de privacyinstellingen dat toestaan.
+14. Een AI-aanbeveling kunnen opvragen.
+15. Statistieken kunnen bekijken.
+16. Gegevens na verversen behouden.
+17. Op een tweede apparaat kunnen inloggen.
+18. Zijn gegevens kunnen exporteren of verwijderen.
+
+Alle belangrijke knoppen moeten een daadwerkelijke functie hebben.
+
+Maak geen placeholderbuttons die niets doen.
+
+## 29. EINDRESULTAAT
+
+Lever een complete, verzorgde en technisch robuuste ENERGYDEX-applicatie.
+
+Prioriteiten, in volgorde:
+
+1. Betrouwbare AI-scanner
+2. Correcte productidentificatie
+3. Mooie productafbeeldingen
+4. Uitstekende mobiele UX
+5. Werkende collecties en beoordelingen
+6. Veilige accounts en synchronisatie
+7. Sociale functies
+8. AI-aanbevelingen
+9. Statistieken
+10. Gamification en extra features
+
+Besteed meer aandacht aan kwaliteit en werkende functionaliteit dan aan het aantal schermen.
+
+Maak het product uniek, aantrekkelijk en leuk om dagelijks te gebruiken, zonder overbodige complexiteit.
+
+Begin met het analyseren van de bestaande repository. Is de repository leeg, zet dan zelf het project op.
+
+Maak een architectuurplan, implementeer vervolgens de applicatie en controleer het resultaat met tests en buildchecks.
+
+Ga zelfstandig verder binnen de beschikbare ontwikkelomgeving. Rapporteer concreet wat geïmplementeerd, getest en nog niet afgerond is.
+
+**Het doel is een app die ik direct met mijn vriendengroep kan gebruiken, niet alleen een prototype.**
