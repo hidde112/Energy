@@ -317,6 +317,143 @@ a {
   line-height: 1.65;
 }
 
+.identity-layout {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 64rem);
+  margin: 7vh auto;
+}
+
+.identity-copy,
+.identity-form {
+  padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  background: var(--surface);
+}
+
+.identity-copy {
+  background:
+    linear-gradient(145deg, rgba(185, 255, 56, 0.12), transparent 56%),
+    var(--surface);
+}
+
+.identity-copy h1 {
+  max-width: 12ch;
+  margin: 0.6rem 0 1rem;
+  font-size: clamp(2.7rem, 9vw, 5.8rem);
+  letter-spacing: -0.065em;
+  line-height: 0.92;
+}
+
+.identity-copy > p:last-child,
+.field-hint,
+.privacy-note,
+.profile-menu small {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.identity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.identity-form label {
+  margin-top: 0.4rem;
+  font-weight: 800;
+}
+
+.identity-form label span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.identity-form input {
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit;
+}
+
+.field-prefix {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+}
+
+.field-prefix span {
+  padding-left: 1rem;
+  color: var(--lime);
+  font-weight: 900;
+}
+
+.field-prefix input {
+  border: 0;
+  background: transparent;
+}
+
+.field-hint,
+.privacy-note,
+.form-error {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.form-error {
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--orange) 40%, transparent);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--orange) 10%, transparent);
+  color: var(--orange);
+}
+
+.identity-form .button {
+  margin-top: 0.6rem;
+}
+
+.identity-form .button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.profile-card h1 {
+  overflow-wrap: anywhere;
+}
+
+.profile-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-elevated);
+}
+
+.profile-menu > span:last-child {
+  display: grid;
+}
+
+.profile-avatar {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lime);
+  color: #0b1108;
+}
+
 @media (min-width: 52rem) {
   .app-shell {
     display: grid;
@@ -408,6 +545,10 @@ a {
 
   .feature-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .identity-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
   }
 }
 
