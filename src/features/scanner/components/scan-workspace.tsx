@@ -7,6 +7,7 @@ import type { ScanInput } from "@/features/scanner/domain/scan-input";
 
 export function ScanWorkspace() {
   const router = useRouter();
+  const [captureAttempt, setCaptureAttempt] = useState(0);
   const [input, setInput] = useState<ScanInput | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,17 +45,19 @@ export function ScanWorkspace() {
       };
       if (!response.ok || !body.scanId) {
         setError(body.title ?? "Identification failed. Try another method.");
+        setCaptureAttempt((current) => current + 1);
         return;
       }
       router.push(`/scan/${body.scanId}`);
     } catch {
       setError("Identification failed. Check your connection and try again.");
+      setCaptureAttempt((current) => current + 1);
     }
   }
 
   return (
     <>
-      <ScanCapture onCapture={identify} />
+      <ScanCapture key={captureAttempt} onCapture={identify} />
       {error ? (
         <p className="form-error" role="alert">
           {error}

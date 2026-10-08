@@ -1,7 +1,13 @@
 import { CollectionGrid } from "@/features/collection/components/collection-grid";
+import { cookies } from "next/headers";
 import type { CollectionListItem } from "@/features/collection/domain/collection";
 import { AppError } from "@/lib/errors/app-error";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  decodeFixture,
+  E2E_COLLECTION_COOKIE,
+  isE2EMode,
+} from "@/lib/e2e/fixtures";
 
 export const metadata = { title: "Collection" };
 export const dynamic = "force-dynamic";
@@ -23,6 +29,20 @@ type RawCollection = {
 };
 
 export default async function CollectionPage() {
+  if (isE2EMode()) {
+    const value = (await cookies()).get(E2E_COLLECTION_COOKIE)?.value;
+    const items = decodeFixture<CollectionListItem[]>(value) ?? [];
+    return (
+      <section className="catalog-page">
+        <p className="eyebrow">Your energy archive</p>
+        <h1>Collection.</h1>
+        <p>
+          Track what you tried separately from the cans you physically kept.
+        </p>
+        <CollectionGrid initialItems={items} />
+      </section>
+    );
+  }
   const client = await createServerSupabaseClient();
   const result = await client
     .from("user_collections")

@@ -5,6 +5,22 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.ENERGYDEX_E2E === "1"
+  ) {
+    const cookieName = "energydex-e2e-user";
+    if (!request.cookies.get(cookieName)?.value) {
+      const userId = crypto.randomUUID();
+      request.cookies.set(cookieName, userId);
+      response.cookies.set(cookieName, userId, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
+    return response;
+  }
   const configuration = parsePublicEnv(process.env);
   const client = createServerClient<Database>(
     configuration.NEXT_PUBLIC_SUPABASE_URL,

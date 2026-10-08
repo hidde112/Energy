@@ -1,0 +1,58 @@
+# Database and security model
+
+Supabase PostgreSQL is the system of record. Four ordered migrations define the
+core release:
+
+1. `202610080001_core_schema.sql` — enums, profiles/settings/roles, sourced
+   catalog, collections, tastings, ratings, scans, rate-limit events, audit
+   logs, indexes, and automatic guest-profile creation.
+2. `202610080002_core_rls.sql` — enables RLS and defines owner, public-read,
+   provisional-write, and moderator boundaries.
+3. `202610080003_storage_and_functions.sql` — public catalog images, private
+   user photos, MIME/size constraints, and object ownership policies.
+4. `202610080004_confirm_scan_and_moderation.sql` — idempotent atomic scan
+   confirmation and audited provisional-product correction RPCs.
+
+`supabase/seed.sql` supplies a small sourced catalog for local development.
+
+## Invariants
+
+- `auth.uid()` owns profiles, collections, tastings, ratings, scans, and private photos.
+- One current review exists per user/product; tasting sessions preserve history.
+- Barcode values are unique and normalized before lookup.
+- Provisional products require provenance and cannot be silently marked verified.
+- Catalog moderation requires a moderator/admin role and writes an audit record.
+- `confirm_scan` verifies ownership and applies product, collection, tasting,
+  review, and idempotency changes in one transaction.
+- The service-role key is never shipped to the browser.
+
+## Migration workflow
+
+Create forward-only migrations; do not edit an already-applied production
+migration. Verify locally:
+
+```bash
+npm run db:start
+npm run db:reset
+npm run test:db
+```
+
+The pgTAP suite covers schema constraints, RLS policies and cross-user denial,
+storage boundaries, idempotent confirmation, and moderation authorization.
+
+After schema changes, regenerate checked-in application types:
+
+```bash
+npx supabase gen types typescript --local > /tmp/database.types.ts
+```
+
+Review the generated diff, then replace
+`src/lib/supabase/database.types.ts` deliberately. For hosted generation use
+`--project-id YOUR_PROJECT_REF` and authenticate through the CLI.
+
+## Production operations
+
+Apply changes with `npx supabase db push`, confirm with
+`npx supabase migration list`, and inspect Supabase logs for failed RPCs or RLS
+denials. Schedule provider-supported backups and practice restore procedures
+before opening access beyond the initial friend group.

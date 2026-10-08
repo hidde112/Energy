@@ -11,6 +11,14 @@ import { AppError } from "@/lib/errors/app-error";
 import { toProblemDetails } from "@/lib/errors/problem-details";
 import { DatabaseRateLimiter } from "@/lib/rate-limit/database-rate-limiter";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  E2E_SCAN_COOKIE,
+  E2E_USER_COOKIE,
+  encodeFixture,
+  fixtureIdentification,
+  isE2EMode,
+  type E2EScan,
+} from "@/lib/e2e/fixtures";
 
 async function scanInput(request: NextRequest): Promise<ScanInput> {
   const contentType = request.headers.get("content-type") ?? "";
@@ -41,6 +49,32 @@ async function scanInput(request: NextRequest): Promise<ScanInput> {
 export async function POST(request: NextRequest) {
   const correlationId = request.headers.get("x-request-id") ?? randomUUID();
   try {
+    if (isE2EMode()) {
+      const userId = request.cookies.get(E2E_USER_COOKIE)?.value;
+      if (!userId)
+        throw new AppError("UNAUTHENTICATED", "A guest session is required.");
+      const input = await scanInput(request);
+      if (input.kind === "image" && input.file.name === "provider-outage.jpg") {
+        throw new AppError(
+          "PROVIDER_UNAVAILABLE",
+          "Image identification is temporarily unavailable. Try a barcode instead.",
+        );
+      }
+      const scanId = randomUUID();
+      const result = fixtureIdentification(
+        scanId,
+        input.kind === "barcode" ? "barcode" : "image",
+      );
+      const response = NextResponse.json(result, {
+        headers: { "x-correlation-id": correlationId },
+      });
+      response.cookies.set(
+        E2E_SCAN_COOKIE,
+        encodeFixture({ ownerId: userId, result } satisfies E2EScan),
+        { httpOnly: true, sameSite: "lax", path: "/" },
+      );
+      return response;
+    }
     const client = await createServerSupabaseClient();
     const auth = await client.auth.getUser();
     if (auth.error || !auth.data.user) {
