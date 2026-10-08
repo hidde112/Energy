@@ -671,6 +671,42 @@ export type Database = {
           },
         ];
       };
+      scan_confirmations: {
+        Row: {
+          created_at: string;
+          id: string;
+          idempotency_key: string;
+          result: NonNullable<Json>;
+          scan_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          idempotency_key: string;
+          result: NonNullable<Json>;
+          scan_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          idempotency_key?: string;
+          result?: NonNullable<Json>;
+          scan_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "scan_confirmations_scan_id_fkey";
+            columns: ["scan_id"];
+            isOneToOne: true;
+            referencedRelation: "scans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       scans: {
         Row: {
           barcode: string | null;
@@ -851,6 +887,23 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      confirm_scan: {
+        Args: {
+          p_confirmation: Json;
+          p_idempotency_key: string;
+          p_scan_id: string;
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
+      correct_provisional_product: {
+        Args: {
+          p_correction: Json;
+          p_correlation_id: string;
+          p_product_id: string;
+        };
+        Returns: Json;
+      };
       is_moderator: { Args: Record<PropertyKey, never>; Returns: boolean };
     };
     Enums: {

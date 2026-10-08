@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.profiles'::regclass),
@@ -27,6 +27,10 @@ select ok(
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.scans'::regclass),
   'scans has RLS enabled'
+);
+select ok(
+  (select relrowsecurity from pg_class where oid = 'public.scan_confirmations'::regclass),
+  'scan confirmations has RLS enabled'
 );
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.products'::regclass),
@@ -62,6 +66,12 @@ select policies_are(
   'product_barcodes',
   array['product_barcodes_select_visible'],
   'barcode reads follow visible products'
+);
+select policies_are(
+  'public',
+  'scan_confirmations',
+  array['scan_confirmations_select_own'],
+  'scan confirmation reads are owner-scoped'
 );
 
 select * from finish();

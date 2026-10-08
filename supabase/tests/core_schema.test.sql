@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(31);
 
 select has_table('public', 'profiles', 'profiles exists');
 select has_table('public', 'user_settings', 'user_settings exists');
@@ -20,6 +20,7 @@ select has_table('public', 'tasting_sessions', 'tasting_sessions exists');
 select has_table('public', 'reviews', 'reviews exists');
 select has_table('public', 'scans', 'scans exists');
 select has_table('public', 'scan_candidates', 'scan_candidates exists');
+select has_table('public', 'scan_confirmations', 'scan confirmations exist');
 select has_table('public', 'audit_logs', 'audit_logs exists');
 select has_table('public', 'app_user_roles', 'app_user_roles exists');
 
@@ -53,6 +54,12 @@ select col_has_check(
 );
 select has_function('public', 'handle_new_user', array[]::text[], 'new users receive a profile');
 select has_function('public', 'is_moderator', array[]::text[], 'moderator helper exists');
+select has_function(
+  'public',
+  'confirm_scan',
+  array['uuid', 'uuid', 'jsonb', 'text'],
+  'atomic scan confirmation function exists'
+);
 select has_trigger(
   'public',
   'products',
