@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+next-env.d.ts
+out/
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+
+# Local environment values
+.env
+.env.local
+.env.*.local
+
+# Local tooling
+.superpowers/
+*.tsbuildinfo
+npm-debug.log*
