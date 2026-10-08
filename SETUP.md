@@ -63,10 +63,11 @@ timeouts, validation, and user-facing fallback errors; see `AI_PIPELINE.md`.
    Production as appropriate. Never set `ENERGYDEX_E2E=1` in Vercel.
 4. Add each Vercel origin to the Supabase Auth redirect allow-list.
 5. Deploy, then set `ENERGYDEX_LIVE_BASE_URL` locally to the HTTPS deployment.
-6. Run `npm run test:smoke-live`. It checks the app, manifest, Supabase Auth,
-   owner RLS, the confirmation RPC, and the OpenAI credential without issuing a
-   paid vision request. It creates a temporary anonymous user and catalog rows,
-   then removes them with the service-role credential.
+6. Run `npm run test:smoke-live`. It checks the deployed app/manifest and sends
+   an authenticated known-barcode journey through the deployed identify and
+   confirmation routes, then verifies owner RLS and the OpenAI credential
+   without issuing a paid vision request. It creates a temporary anonymous user
+   and catalog rows, then removes them with the service-role credential.
 
 No hosted credentials are present in this repository, so live smoke testing is
 blocked until the project owner supplies those bindings.

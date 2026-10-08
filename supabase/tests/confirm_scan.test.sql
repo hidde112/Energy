@@ -127,7 +127,7 @@ select is(
   'one confirmation receipt is stored per scan'
 );
 
-create function pg_temp.duplicate_barcode_rolls_back()
+create function pg_temp.untrusted_correction_barcode_is_ignored()
 returns boolean
 language plpgsql
 as $$
@@ -150,10 +150,9 @@ begin
     }'::jsonb,
     'confirm-conflict'
   );
-  return false;
-exception when unique_violation then
-  return not exists (select 1 from public.products where name = 'Duplicate Can')
-    and not exists (
+  return exists (select 1 from public.products where name = 'Duplicate Can')
+    and (select count(*) from public.product_barcodes where barcode = '9002490100070') = 1
+    and exists (
       select 1 from public.scan_confirmations
       where scan_id = '52000000-0000-0000-0000-000000000003'
     );
@@ -161,8 +160,8 @@ end;
 $$;
 
 select ok(
-  pg_temp.duplicate_barcode_rolls_back(),
-  'duplicate barcode conflicts roll back product and confirmation writes'
+  pg_temp.untrusted_correction_barcode_is_ignored(),
+  'untrusted correction barcode is ignored while confirmation succeeds'
 );
 
 create function pg_temp.regular_user_is_denied()

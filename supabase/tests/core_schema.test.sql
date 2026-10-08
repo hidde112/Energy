@@ -27,7 +27,12 @@ select has_table('public', 'app_user_roles', 'app_user_roles exists');
 select has_pk('public', 'profiles', 'profiles has a primary key');
 select has_pk('public', 'products', 'products has a primary key');
 select col_is_unique('public', 'profiles', 'username', 'usernames are unique');
-select col_is_unique('public', 'product_barcodes', 'barcode', 'barcodes are unique');
+select index_is_unique(
+  'public',
+  'product_barcodes',
+  'product_barcodes_owner_value_idx',
+  'barcodes are unique globally or per private provisional owner'
+);
 select col_is_unique(
   'public',
   'user_collections',

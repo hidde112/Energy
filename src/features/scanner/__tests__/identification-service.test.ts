@@ -159,6 +159,26 @@ describe("IdentificationService", () => {
     expect(lowResult.candidates.length).toBeLessThanOrEqual(3);
   });
 
+  it("retrieves vision candidates by separate product attributes", async () => {
+    const deps = dependencies();
+    const service = new IdentificationService(deps);
+
+    await service.identify(
+      userId,
+      { kind: "image", file: new File(["image"], "can.jpg") },
+      "separate-attributes",
+    );
+
+    expect(deps.catalog.findCandidates).toHaveBeenCalledWith(
+      "Energy Drink",
+      12,
+    );
+    expect(deps.catalog.findCandidates).not.toHaveBeenCalledWith(
+      "Red Bull Energy Drink Original",
+      12,
+    );
+  });
+
   it("reuses an image fingerprint without a second inference", async () => {
     const deps = dependencies();
     const service = new IdentificationService(deps);
@@ -186,6 +206,57 @@ describe("IdentificationService", () => {
 
     expect(second).toEqual<IdentificationResult>(first);
     expect(deps.rateLimiter.consume).toHaveBeenCalledOnce();
+  });
+
+  it("allows only one in-flight provider call for the same image", async () => {
+    let releaseVision: ((value: VisionHypothesis) => void) | undefined;
+    const deps = dependencies();
+    deps.vision.identify = vi.fn(
+      () =>
+        new Promise<VisionHypothesis>((resolve) => {
+          releaseVision = resolve;
+        }),
+    );
+    const service = new IdentificationService(deps);
+    const first = service.identify(
+      userId,
+      { kind: "image", file: new File(["same"], "can.jpg") },
+      "concurrent-one",
+    );
+    await vi.waitFor(() => expect(deps.vision.identify).toHaveBeenCalledOnce());
+
+    await expect(
+      service.identify(
+        userId,
+        { kind: "image", file: new File(["same"], "can.jpg") },
+        "concurrent-two",
+      ),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(deps.vision.identify).toHaveBeenCalledOnce();
+
+    releaseVision?.(hypothesis);
+    await expect(first).resolves.toMatchObject({ source: "vision" });
+  });
+
+  it("reuses cached inference when downstream persistence initially fails", async () => {
+    const deps = dependencies();
+    const persistence = vi
+      .spyOn(deps.cache, "saveResult")
+      .mockRejectedValueOnce(new Error("candidate persistence failed"));
+    const service = new IdentificationService(deps);
+    const input = {
+      kind: "image",
+      file: new File(["same"], "can.jpg"),
+    } as const;
+
+    await expect(
+      service.identify(userId, input, "failed-save"),
+    ).rejects.toThrow(/candidate persistence failed/i);
+    await expect(
+      service.identify(userId, input, "retry-save"),
+    ).resolves.toMatchObject({ source: "vision_cache" });
+    expect(deps.vision.identify).toHaveBeenCalledOnce();
+    expect(persistence).toHaveBeenCalledTimes(2);
   });
 
   it("throws RATE_LIMITED before provider work", async () => {

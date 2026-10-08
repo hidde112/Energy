@@ -225,6 +225,7 @@ export type Database = {
           created_at: string;
           format: string;
           id: string;
+          owner_id: string | null;
           product_id: string;
         };
         ComputedFields: never;
@@ -234,6 +235,7 @@ export type Database = {
           created_at?: string;
           format: string;
           id?: string;
+          owner_id?: string | null;
           product_id: string;
         };
         Update: {
@@ -242,6 +244,7 @@ export type Database = {
           created_at?: string;
           format?: string;
           id?: string;
+          owner_id?: string | null;
           product_id?: string;
         };
         Relationships: [
@@ -912,6 +915,27 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_identification: {
+        Args: {
+          p_barcode: string;
+          p_fingerprint: string;
+          p_idempotency_key: string;
+          p_input_kind: string;
+          p_scan_id: string;
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
+      complete_identification: {
+        Args: {
+          p_candidates: Json;
+          p_hypothesis: Json;
+          p_result: Json;
+          p_scan_id: string;
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
       confirm_scan: {
         Args: {
           p_confirmation: Json;
@@ -921,6 +945,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      consume_rate_limit: {
+        Args: {
+          p_action: string;
+          p_limit: number;
+          p_user_id: string;
+          p_window_ms: number;
+        };
+        Returns: boolean;
+      };
       correct_provisional_product: {
         Args: {
           p_correction: Json;
@@ -929,7 +962,20 @@ export type Database = {
         };
         Returns: Json;
       };
+      fail_identification: {
+        Args: { p_failure_code: string; p_scan_id: string; p_user_id: string };
+        Returns: undefined;
+      };
       is_moderator: { Args: Record<PropertyKey, never>; Returns: boolean };
+      save_identification_hypothesis: {
+        Args: {
+          p_fingerprint: string;
+          p_hypothesis: Json;
+          p_scan_id: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
       save_rating: {
         Args: { p_idempotency_key: string; p_input: Json; p_user_id: string };
         Returns: Json;

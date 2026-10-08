@@ -18,8 +18,8 @@ Updated: 2026-10-08
 
 ## Verification evidence
 
-- Unit/component tests: 106 passing tests across 28 files.
-- Database tests: 88 passing pgTAP assertions across 6 files.
+- Unit/component tests: 114 passing tests across 30 files.
+- Database tests: 108 passing pgTAP assertions across 8 files.
 - End-to-end tests: 20 Playwright cases across desktop, Pixel 7, and iPhone-sized profiles.
 - Formatting, ESLint, strict TypeScript, and production build are required by `npm run verify`.
 - Playwright uses an explicit non-production cookie fixture. It proves browser
@@ -58,7 +58,7 @@ the owner supplies secure environment bindings and a deployment URL.
 12. Cross-user and unauthorized mutation denial: RLS/RPC pgTAP plus UI ownership denial pass.
 13. Missing configuration is explicit and secrets stay server-side: env tests, setup page, and client-bundle scan pass.
 14. Required automated gates and production build: `npm run verify` passes
-    after a clean five-migration database rebuild.
+    after a clean six-migration database rebuild.
 15. Setup, migration, deployment, pipeline, progress, and limitations: documented in the repository.
 
 These checks do not certify a deployment. Release acceptance remains pending

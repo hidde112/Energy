@@ -1,6 +1,6 @@
 # Database and security model
 
-Supabase PostgreSQL is the system of record. Five ordered migrations define the
+Supabase PostgreSQL is the system of record. Six ordered migrations define the
 core release:
 
 1. `202610080001_core_schema.sql` — enums, profiles/settings/roles, sourced
@@ -15,6 +15,9 @@ core release:
 5. `202610080005_security_and_workflow_hardening.sql` — service-owned scan
    persistence, strict confirmation provenance, null-safe product identity, and
    atomic idempotent rating/tasting mutations.
+6. `202610080006_concurrent_identification_and_private_provisionals.sql` —
+   owner-scoped provisional identity and barcodes, atomic scan/candidate
+   completion, in-flight identification claims, and concurrency-safe quotas.
 
 `supabase/seed.sql` supplies a small sourced catalog for local development.
 
@@ -22,7 +25,8 @@ core release:
 
 - `auth.uid()` owns profiles, collections, tastings, ratings, scans, and private photos.
 - One current review exists per user/product; tasting sessions preserve history.
-- Barcode values are unique and normalized before lookup.
+- Verified barcode values are globally unique; private provisional barcodes are
+  unique within their owner boundary and remain hidden by product RLS.
 - Provisional products require provenance and cannot be silently marked verified.
 - Catalog moderation requires a moderator/admin role and writes an audit record.
 - `confirm_scan` verifies ownership and the server-persisted candidate/source,
@@ -47,7 +51,8 @@ npm run test:db
 
 The pgTAP suite covers schema constraints, RLS policies and cross-user denial,
 storage boundaries, hardened scan provenance, idempotent confirmation, atomic
-rating writes, and moderation authorization.
+rating writes, private provisional isolation, atomic identification, rate-limit
+consumption, and moderation authorization.
 
 After schema changes, regenerate checked-in application types:
 

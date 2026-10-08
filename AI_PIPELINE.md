@@ -28,8 +28,11 @@ becomes verified data.
 
 - Known barcodes never invoke vision.
 - Identification results and image hypotheses are cached per user/fingerprint.
+- A database-backed claim coordinates matching idempotency keys and image
+  fingerprints across server instances before provider work starts.
+- Scan state and every authorized candidate are committed in one transaction.
 - Images are validated, resized, and bounded before provider submission.
-- Database-backed rate limits constrain identification calls.
+- Database-backed rate limits consume quota under a per-user/action lock.
 - Provider requests use a 15-second deadline and propagate abort signals.
 - The E2E suite uses `ENERGYDEX_E2E=1`, an explicit deterministic server harness
   that is isolated from production configuration and makes no provider calls.
@@ -44,9 +47,10 @@ production demo fallback.
 
 ## Live validation
 
-`npm run test:smoke-live` validates the deployment, anonymous Auth, owner RLS,
-the confirmation RPC, and provider credentials without making a paid vision
-request. It creates and cleans up temporary records. A real image-recognition
-check should be performed manually after budget/retention approval using a
-non-sensitive can image, then verified against logs and the provisional-data
-rules above.
+`npm run test:smoke-live` validates the deployed application and manifest, then
+uses an authenticated browser cookie to exercise the deployed barcode-identify
+and confirmation routes, owner RLS, and provider credentials without making a
+paid vision request. It creates and cleans up temporary records. A real
+image-recognition check should be performed manually after budget/retention
+approval using a non-sensitive can image, then verified against logs and the
+provisional-data rules above.

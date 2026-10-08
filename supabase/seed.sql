@@ -53,7 +53,7 @@ values (
   'EAN-13',
   'AT'
 )
-on conflict (barcode) do nothing;
+on conflict do nothing;
 
 insert into public.product_sources (
   product_id,

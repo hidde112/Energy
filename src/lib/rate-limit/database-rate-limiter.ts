@@ -22,29 +22,17 @@ export class DatabaseRateLimiter implements RateLimiter {
     limit: number,
     windowMs: number,
   ) {
-    const since = new Date(Date.now() - windowMs).toISOString();
-    const countResult = await this.client
-      .from("rate_limit_events")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("action", action)
-      .gte("occurred_at", since);
-
-    if (countResult.error) {
-      throw new AppError("UNEXPECTED", "Unable to check the request limit.", {
-        cause: countResult.error,
+    const consumed = await this.client.rpc("consume_rate_limit", {
+      p_user_id: userId,
+      p_action: action,
+      p_limit: limit,
+      p_window_ms: windowMs,
+    });
+    if (consumed.error) {
+      throw new AppError("UNEXPECTED", "Unable to consume the request limit.", {
+        cause: consumed.error,
       });
     }
-    if ((countResult.count ?? 0) >= limit) return false;
-
-    const insertResult = await this.client
-      .from("rate_limit_events")
-      .insert({ user_id: userId, action });
-    if (insertResult.error) {
-      throw new AppError("UNEXPECTED", "Unable to record the request limit.", {
-        cause: insertResult.error,
-      });
-    }
-    return true;
+    return consumed.data;
   }
 }

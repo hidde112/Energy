@@ -1,6 +1,5 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
 import type { CatalogRepository } from "@/features/catalog/server/catalog-repository";
 import type { ProductDetail } from "@/features/catalog/domain/types";
 import {
@@ -74,12 +73,117 @@ export class IdentificationService {
     input: ScanInput,
     idempotencyKey: string,
   ): Promise<IdentificationResult> {
-    const existing = await this.dependencies.cache.getResult(
+    if (input.kind === "barcode") {
+      const claim = await this.dependencies.cache.claim({
+        userId,
+        idempotencyKey,
+        inputKind: "barcode",
+        barcode: input.barcode.value,
+      });
+      if (claim.state === "existing") return claim.result;
+      if (claim.state === "in_progress") {
+        throw new AppError(
+          "CONFLICT",
+          "This identification is already in progress. Retry shortly.",
+        );
+      }
+      try {
+        await this.consumeRateLimit(userId);
+        return await this.identifyBarcode(
+          userId,
+          input.barcode,
+          idempotencyKey,
+          claim.scanId,
+        );
+      } catch (error) {
+        await this.releaseClaim(claim.scanId, userId, error);
+        throw error;
+      }
+    }
+
+    const blob = input.kind === "image" ? input.file : input.frame;
+    const prepared = await this.prepareImage(blob);
+    const claim = await this.dependencies.cache.claim({
       userId,
       idempotencyKey,
-    );
-    if (existing) return existing;
+      inputKind: input.kind,
+      fingerprint: prepared.sha256,
+    });
+    if (claim.state === "existing") return claim.result;
+    if (claim.state === "in_progress") {
+      throw new AppError(
+        "CONFLICT",
+        "This image is already being identified. Retry shortly.",
+      );
+    }
 
+    try {
+      await this.consumeRateLimit(userId);
+      let hypothesis =
+        claim.hypothesis ??
+        (await this.dependencies.cache.getHypothesis(userId, prepared.sha256));
+      const source: IdentificationSource = hypothesis
+        ? "vision_cache"
+        : "vision";
+      if (!hypothesis) {
+        hypothesis = await this.dependencies.vision.identify(
+          prepared,
+          new AbortController().signal,
+        );
+        await this.dependencies.cache.saveHypothesis(
+          claim.scanId,
+          userId,
+          prepared.sha256,
+          hypothesis,
+        );
+      }
+
+      const queries = [
+        hypothesis.productName,
+        [hypothesis.brand, hypothesis.productName].filter(Boolean).join(" "),
+        hypothesis.brand,
+        hypothesis.variant,
+      ].filter((value, index, values): value is string =>
+        Boolean(value && values.indexOf(value) === index),
+      );
+      const candidateGroups = await Promise.all(
+        queries.map((query) =>
+          this.dependencies.catalog.findCandidates(query, 12),
+        ),
+      );
+      const products = [
+        ...new Map(
+          candidateGroups.flat().map((product) => [product.id, product]),
+        ).values(),
+      ];
+      const ranked = rankCandidates(hypothesis, products);
+      const confidence = ranked[0]
+        ? classifyConfidence(ranked[0].score)
+        : "low";
+      const candidateLimit = confidence === "high" ? 1 : 3;
+      const result: IdentificationResult = {
+        scanId: claim.scanId,
+        source,
+        confidence,
+        candidates: ranked.slice(0, candidateLimit),
+        externalProduct: null,
+        requiresCorrection: confidence === "low",
+      };
+      return await this.dependencies.cache.saveResult({
+        userId,
+        idempotencyKey,
+        inputKind: input.kind,
+        fingerprint: prepared.sha256,
+        hypothesis,
+        result,
+      });
+    } catch (error) {
+      await this.releaseClaim(claim.scanId, userId, error);
+      throw error;
+    }
+  }
+
+  private async consumeRateLimit(userId: string) {
     const allowed = await this.dependencies.rateLimiter.consume(
       userId,
       "identify",
@@ -89,56 +193,23 @@ export class IdentificationService {
     if (!allowed) {
       throw new AppError("RATE_LIMITED", "Too many identification requests.");
     }
+  }
 
-    if (input.kind === "barcode") {
-      return this.identifyBarcode(userId, input.barcode, idempotencyKey);
+  private async releaseClaim(scanId: string, userId: string, error: unknown) {
+    const failureCode = error instanceof AppError ? error.code : "UNEXPECTED";
+    try {
+      await this.dependencies.cache.markFailed(scanId, userId, failureCode);
+    } catch {
+      // Preserve the original provider/persistence error. The database lease
+      // expires and can still be reclaimed if releasing it also fails.
     }
-
-    const blob = input.kind === "image" ? input.file : input.frame;
-    const prepared = await this.prepareImage(blob);
-    let hypothesis = await this.dependencies.cache.getHypothesis(
-      userId,
-      prepared.sha256,
-    );
-    const source: IdentificationSource = hypothesis ? "vision_cache" : "vision";
-    if (!hypothesis) {
-      hypothesis = await this.dependencies.vision.identify(
-        prepared,
-        new AbortController().signal,
-      );
-    }
-
-    const query = [hypothesis.brand, hypothesis.productName, hypothesis.variant]
-      .filter(Boolean)
-      .join(" ");
-    const products = query
-      ? await this.dependencies.catalog.findCandidates(query, 12)
-      : [];
-    const ranked = rankCandidates(hypothesis, products);
-    const confidence = ranked[0] ? classifyConfidence(ranked[0].score) : "low";
-    const candidateLimit = confidence === "high" ? 1 : 3;
-    const result: IdentificationResult = {
-      scanId: randomUUID(),
-      source,
-      confidence,
-      candidates: ranked.slice(0, candidateLimit),
-      externalProduct: null,
-      requiresCorrection: confidence === "low",
-    };
-    return this.dependencies.cache.saveResult({
-      userId,
-      idempotencyKey,
-      inputKind: input.kind,
-      fingerprint: prepared.sha256,
-      hypothesis,
-      result,
-    });
   }
 
   private async identifyBarcode(
     userId: string,
     barcode: Extract<ScanInput, { kind: "barcode" }>["barcode"],
     idempotencyKey: string,
+    scanId: string,
   ) {
     const catalogProduct =
       await this.dependencies.catalog.findByBarcode(barcode);
@@ -157,7 +228,7 @@ export class IdentificationService {
         },
       };
       const result: IdentificationResult = {
-        scanId: randomUUID(),
+        scanId,
         source: "catalog_barcode",
         confidence: "high",
         candidates: [candidate],
@@ -178,7 +249,7 @@ export class IdentificationService {
       new AbortController().signal,
     );
     const result: IdentificationResult = {
-      scanId: randomUUID(),
+      scanId,
       source: externalProduct ? "external_barcode" : "barcode_not_found",
       confidence: externalProduct ? "high" : "low",
       candidates: [],

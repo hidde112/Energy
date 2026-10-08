@@ -41,8 +41,9 @@ npm run test:smoke-live # credentialed hosted Auth/RLS/RPC smoke test
 The E2E suite enables an explicit test-only provider with `ENERGYDEX_E2E=1` in
 the Playwright-managed process. It proves browser journeys and persistence
 contracts, not hosted Supabase integration. Do not enable this variable in a
-deployed environment. The hosted smoke test creates and then removes a temporary
-anonymous user and catalog records; run it only against a prepared environment.
+deployed environment. The hosted smoke test sends a real authenticated barcode
+journey through the deployed API, then removes its temporary anonymous user and
+catalog records; run it only against a prepared environment.
 
 ## Documentation
 

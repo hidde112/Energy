@@ -1,4 +1,9 @@
+import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import {
+  assertDeploymentPage,
+  assertPwaManifest,
+} from "../src/lib/smoke/live-contracts.ts";
 import type { Database } from "../src/lib/supabase/database.types";
 
 const required = [
@@ -40,10 +45,30 @@ async function check(
   console.log(`ok - ${label} (${response.status})`);
 }
 
-const userClient = createClient<Database>(
+type AuthCookie = {
+  name: string;
+  value: string;
+  options?: Record<string, unknown>;
+};
+
+let authCookies: AuthCookie[] = [];
+const userClient = createServerClient<Database>(
   supabaseUrl.toString(),
   publishableKey,
-  { auth: { autoRefreshToken: false, persistSession: false } },
+  {
+    cookies: {
+      getAll: () => authCookies,
+      setAll: (updates) => {
+        for (const update of updates) {
+          authCookies = authCookies.filter(
+            (cookie) => cookie.name !== update.name,
+          );
+          authCookies.push(update);
+        }
+      },
+    },
+    auth: { autoRefreshToken: false, persistSession: false },
+  },
 );
 const adminClient = createClient<Database>(
   supabaseUrl.toString(),
@@ -53,7 +78,14 @@ const adminClient = createClient<Database>(
 const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const brandId = crypto.randomUUID();
 const productId = crypto.randomUUID();
-const scanId = crypto.randomUUID();
+const barcodeBody = [...suffix.slice(0, 7)]
+  .map((character) => String(Number.parseInt(character, 16) % 10))
+  .join("");
+const weighted = [...barcodeBody].reduce(
+  (sum, digit, index) => sum + Number(digit) * (index % 2 === 0 ? 3 : 1),
+  0,
+);
+const barcode = `${barcodeBody}${(10 - (weighted % 10)) % 10}`;
 let userId: string | undefined;
 
 function requireSuccess(error: { message: string } | null, label: string) {
@@ -61,9 +93,26 @@ function requireSuccess(error: { message: string } | null, label: string) {
   console.log(`ok - ${label}`);
 }
 
+function cookieHeader() {
+  return authCookies
+    .filter((cookie) => cookie.value)
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
+}
+
+async function appRequest(path: string, init: RequestInit = {}) {
+  return fetch(new URL(path, liveBaseUrl), {
+    ...init,
+    headers: {
+      ...init.headers,
+      cookie: cookieHeader(),
+    },
+    signal: AbortSignal.timeout(15_000),
+    redirect: "follow",
+  });
+}
+
 try {
-  await check("ENERGYDEX deployment", new URL("/", liveBaseUrl));
-  await check("PWA manifest", new URL("/manifest.webmanifest", liveBaseUrl));
   await check(
     "Supabase Auth settings",
     new URL("/auth/v1/settings", supabaseUrl),
@@ -89,6 +138,11 @@ try {
   requireSuccess(anonymous.error, "anonymous Auth sign-in");
   userId = anonymous.data.user?.id;
   if (!userId) throw new Error("anonymous Auth did not return a user ID");
+
+  await assertDeploymentPage(await appRequest("/"));
+  console.log("ok - deployed ENERGYDEX application shell");
+  await assertPwaManifest(await appRequest("/manifest.webmanifest"));
+  console.log("ok - deployed PWA manifest contract");
 
   const profile = await userClient
     .from("profiles")
@@ -119,39 +173,84 @@ try {
     verified_at: new Date().toISOString(),
   });
   requireSuccess(product.error, "temporary catalog product");
-  const scan = await adminClient.from("scans").insert({
-    id: scanId,
-    user_id: userId,
-    status: "identified",
-    input_kind: "barcode",
-    idempotency_key: `smoke-identify-${suffix}`,
-    matched_product_id: productId,
-    provider_usage: { smoke: true },
-  });
-  requireSuccess(scan.error, "server-owned scan persistence");
-  const candidate = await adminClient.from("scan_candidates").insert({
-    scan_id: scanId,
+  const barcodeRow = await adminClient.from("product_barcodes").insert({
     product_id: productId,
-    position: 1,
-    score: 1,
-    confidence: "high",
-    hypothesis: { smoke: true },
+    barcode,
+    format: "EAN-8",
   });
-  requireSuccess(candidate.error, "server-owned candidate persistence");
+  requireSuccess(barcodeRow.error, "temporary catalog barcode");
 
-  const confirmation = await userClient.rpc("confirm_scan", {
-    p_scan_id: scanId,
-    p_user_id: userId,
-    p_confirmation: { product_id: productId, collection_status: "tried" },
-    p_idempotency_key: `smoke-confirm-${suffix}`,
+  const identificationResponse = await appRequest("/api/scans/identify", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "idempotency-key": `smoke-identify-${suffix}`,
+    },
+    body: JSON.stringify({ barcode }),
   });
-  requireSuccess(confirmation.error, "owner-scoped confirmation RPC");
+  if (!identificationResponse.ok) {
+    throw new Error(
+      `deployed identify route returned HTTP ${identificationResponse.status}`,
+    );
+  }
+  const identification = (await identificationResponse.json()) as {
+    scanId?: string;
+    source?: string;
+    candidates?: Array<{ product?: { id?: string } }>;
+  };
+  if (
+    !identification.scanId ||
+    identification.source !== "catalog_barcode" ||
+    identification.candidates?.[0]?.product?.id !== productId
+  ) {
+    throw new Error(
+      "deployed identify route returned an invalid catalog match",
+    );
+  }
+  console.log("ok - deployed barcode identification route");
+
+  const confirmationResponse = await appRequest(
+    `/api/scans/${identification.scanId}/confirm`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        scanId: identification.scanId,
+        idempotencyKey: `smoke-confirm-${suffix}`,
+        confirmation: { productId, collectionStatus: "tried" },
+      }),
+    },
+  );
+  if (!confirmationResponse.ok) {
+    throw new Error(
+      `deployed confirmation route returned HTTP ${confirmationResponse.status}`,
+    );
+  }
+  const confirmation = (await confirmationResponse.json()) as {
+    ok?: boolean;
+    data?: { productId?: string };
+  };
+  if (!confirmation.ok || confirmation.data?.productId !== productId) {
+    throw new Error("deployed confirmation route returned an invalid result");
+  }
+  console.log("ok - deployed owner-scoped confirmation route");
+
   const collection = await userClient
     .from("user_collections")
     .select("id")
     .eq("product_id", productId)
     .single();
   requireSuccess(collection.error, "collection persistence through RLS");
+
+  const identifiedScan = await adminClient
+    .from("scans")
+    .select("status")
+    .eq("id", identification.scanId)
+    .single();
+  requireSuccess(identifiedScan.error, "deployed scan persistence");
+  if (!identifiedScan.data || identifiedScan.data.status !== "confirmed") {
+    throw new Error("deployed scan did not reach confirmed status");
+  }
 
   console.log(
     "Live smoke test passed; no paid vision request was made. Temporary rows are being removed.",
