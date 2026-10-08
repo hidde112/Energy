@@ -57,7 +57,9 @@ export async function POST(
       });
       response.cookies.set(
         E2E_COLLECTION_COOKIE,
-        encodeFixture(fixtureCollection()),
+        encodeFixture(
+          fixtureCollection(body.confirmation?.collectionStatus ?? "tried"),
+        ),
         {
           httpOnly: true,
           sameSite: "lax",

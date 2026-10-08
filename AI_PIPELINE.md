@@ -13,7 +13,9 @@ ENERGYDEX uses the least expensive trustworthy path first.
 6. Brand, name, flavor, variant, size, aliases, and barcode signals rank internal
    candidates. High confidence returns one suggestion, medium up to three, and
    low confidence requires explicit correction.
-7. Confirmation is an ownership-checked, idempotent database transaction.
+7. Server-owned scan/candidate rows preserve the identification decision.
+   Confirmation is an ownership-checked, idempotent database transaction that
+   only accepts the persisted match, candidate, or correction path.
 
 ## Truthfulness and provenance
 
@@ -28,9 +30,10 @@ becomes verified data.
 - Identification results and image hypotheses are cached per user/fingerprint.
 - Images are validated, resized, and bounded before provider submission.
 - Database-backed rate limits constrain identification calls.
-- Provider requests use timeouts and abort signals.
+- Provider requests use a 15-second deadline and propagate abort signals.
 - The E2E suite uses `ENERGYDEX_E2E=1`, an explicit deterministic server harness
   that is isolated from production configuration and makes no provider calls.
+  It is UI-contract coverage, not a hosted provider/database integration test.
 
 ## Failure behavior
 
@@ -41,7 +44,9 @@ production demo fallback.
 
 ## Live validation
 
-`npm run test:smoke-live` validates deployment and provider credentials without
-making a paid vision request. A real image-recognition check should be performed
-manually after budget/retention approval using a non-sensitive can image, then
-verified against logs and the provisional-data rules above.
+`npm run test:smoke-live` validates the deployment, anonymous Auth, owner RLS,
+the confirmation RPC, and provider credentials without making a paid vision
+request. It creates and cleans up temporary records. A real image-recognition
+check should be performed manually after budget/retention approval using a
+non-sensitive can image, then verified against logs and the provisional-data
+rules above.

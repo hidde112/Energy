@@ -1,39 +1,29 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Star } from "lucide-react";
+import { parseRating } from "@/features/reviews/domain/rating";
 import {
-  parseRating,
-  type Review,
-  type TastingSession,
-} from "@/features/reviews/domain/rating";
-import {
-  recordTasting,
-  upsertCurrentReview,
+  saveRating,
+  type SavedRating,
+  type SaveRatingInput,
 } from "@/features/reviews/server/review-actions";
-import type {
-  RecordTastingInput,
-  UpsertReviewInput,
-} from "@/features/reviews/server/review-service";
 import type { ActionResult } from "@/lib/actions/action-result";
 
 export function RatingForm({
   productId,
   initialRating = 7,
-  onSave = upsertCurrentReview,
-  onRecordTasting = recordTasting,
+  onSave = saveRating,
 }: {
   productId: string;
   initialRating?: number;
-  onSave?: (input: UpsertReviewInput) => Promise<ActionResult<Review>>;
-  onRecordTasting?: (
-    input: RecordTastingInput,
-  ) => Promise<ActionResult<TastingSession>>;
+  onSave?: (input: SaveRatingInput) => Promise<ActionResult<SavedRating>>;
 }) {
   const [rating, setRating] = useState(String(initialRating));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const idempotencyKey = useRef(crypto.randomUUID());
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,28 +34,19 @@ export function RatingForm({
     try {
       const value = parseRating(Number(rating));
       const form = new FormData(event.currentTarget);
-      let tastingSessionId: string | undefined;
-
-      if (form.get("recordTasting") === "on") {
-        const tasting = await onRecordTasting({ productId });
-        if (!tasting.ok) {
-          setError(tasting.error.title);
-          return;
-        }
-        tastingSessionId = tasting.data.id;
-      }
-
       const result = await onSave({
         productId,
-        tastingSessionId,
         rating: value,
         body: String(form.get("body") ?? ""),
+        recordTasting: form.get("recordTasting") === "on",
+        idempotencyKey: idempotencyKey.current,
       });
       if (!result.ok) {
         setError(result.error.title);
         return;
       }
       setSaved(true);
+      idempotencyKey.current = crypto.randomUUID();
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "Rating could not be saved.",

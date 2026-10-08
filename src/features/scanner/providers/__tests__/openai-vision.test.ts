@@ -63,6 +63,42 @@ describe("image preprocessing", () => {
 });
 
 describe("OpenAiVisionProvider", () => {
+  it("aborts a vision request at the configured deadline", async () => {
+    vi.useFakeTimers();
+    const caller = new AbortController();
+    let providerSignal: AbortSignal | undefined;
+    const model: VisionModelClient = {
+      identify: vi.fn((_image, signal) => {
+        providerSignal = signal;
+        return new Promise<string>((_resolve, reject) => {
+          signal.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        });
+      }),
+    };
+    const provider = new OpenAiVisionProvider({
+      apiKey: "test-key",
+      client: model,
+      timeoutMs: 100,
+    });
+    const pending = provider.identify(
+      await preprocessScanImage(await imageFile()),
+      caller.signal,
+    );
+    const rejection = expect(pending).rejects.toMatchObject({
+      code: "PROVIDER_UNAVAILABLE",
+    });
+
+    await vi.advanceTimersByTimeAsync(101);
+    const timedOut = providerSignal?.aborted ?? false;
+    await rejection;
+    expect(timedOut).toBe(true);
+    vi.useRealTimers();
+  });
+
   it("strictly parses a valid hypothesis", async () => {
     const model = client(validVisionResponse);
     const provider = new OpenAiVisionProvider({

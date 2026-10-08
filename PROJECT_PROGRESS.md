@@ -13,15 +13,18 @@ Updated: 2026-10-08
 - Barcode-first Open Food Facts lookup, validated OpenAI vision adapter,
   matching/confidence ranking, caching, and rate limiting.
 - Atomic idempotent scan confirmation, provisional products, moderation, and audit logging.
-- Deterministic desktop/mobile E2E coverage, pgTAP security coverage, CI, and deployment docs.
+- Deterministic desktop/mobile UI-contract coverage, pgTAP security coverage,
+  CI, and deployment docs.
 
 ## Verification evidence
 
-- Unit/component tests: 97 passing tests across 26 files.
-- Database tests: 68 passing pgTAP assertions across 4 files.
+- Unit/component tests: 106 passing tests across 28 files.
+- Database tests: 88 passing pgTAP assertions across 6 files.
 - End-to-end tests: 20 Playwright cases across desktop, Pixel 7, and iPhone-sized profiles.
 - Formatting, ESLint, strict TypeScript, and production build are required by `npm run verify`.
-- Final clean-install verification is recorded in the completing commit/task handoff.
+- Playwright uses an explicit non-production cookie fixture. It proves browser
+  behavior and persistence contracts, while pgTAP proves database policies and
+  transactions; the credentialed hosted smoke test is the integration boundary.
 
 ## Configuration required
 
@@ -37,23 +40,30 @@ The repository has no hosted Supabase, Vercel, or OpenAI credentials. Therefore
 `npm run test:smoke-live` is intentionally blocked—not reported as passing—until
 the owner supplies secure environment bindings and a deployment URL.
 
-## Core acceptance audit
+## Automated acceptance evidence
 
-1. Guest identity and normalized unique username: implemented; unit, E2E, and DB constraints cover it.
-2. Refresh persistence: covered by onboarding, collection, and rating E2E journeys.
+1. Guest identity and normalized unique username: implemented; unit,
+   UI-contract, and database constraints cover it.
+2. Browser refresh persistence: covered by deterministic onboarding,
+   collection, and rating journeys; hosted persistence awaits the live smoke test.
 3. iPhone-sized, Android-sized, and desktop layouts: responsive Playwright profiles pass without overflow.
 4. Installable PWA: manifest, icons, registration, and offline state are implemented and unit-tested.
 5. Camera/gallery/manual truthful fallbacks: component and E2E coverage pass.
-6. Known barcode avoids vision: orchestration unit tests and barcode E2E path pass.
-7. Unknown image uses validated server-side vision candidates: adapter/unit coverage and deterministic E2E pass.
+6. Known barcode avoids vision: orchestration unit tests and deterministic barcode journey pass.
+7. Unknown image uses validated server-side vision candidates: adapter/unit coverage and deterministic browser journey pass.
 8. Low-confidence output remains provisional/correctable: domain, database, and moderation tests pass.
-9. Confirmation adds an explicit collection status atomically: RPC/pgTAP and E2E pass.
-10. Tasting history plus one current rating: schema/service/unit and E2E pass.
-11. Collection/rating refresh persistence: E2E pass; database ownership/persistence is covered by pgTAP.
-12. Cross-user and unauthorized mutation denial: RLS/RPC pgTAP plus E2E ownership denial pass.
+9. Confirmation adds an explicit collection status atomically: RPC/pgTAP and UI-contract journey pass.
+10. Tasting history plus one current rating: atomic RPC, schema, unit, and UI-contract coverage pass.
+11. Collection/rating refresh behavior passes in the UI harness; database ownership and persistence are covered separately by pgTAP.
+12. Cross-user and unauthorized mutation denial: RLS/RPC pgTAP plus UI ownership denial pass.
 13. Missing configuration is explicit and secrets stay server-side: env tests, setup page, and client-bundle scan pass.
-14. Required automated gates and production build: `npm run verify` passes from a clean install.
+14. Required automated gates and production build: `npm run verify` passes
+    after a clean five-migration database rebuild.
 15. Setup, migration, deployment, pipeline, progress, and limitations: documented in the repository.
+
+These checks do not certify a deployment. Release acceptance remains pending
+until `npm run test:smoke-live` passes with the owner's hosted Supabase, Vercel,
+and OpenAI bindings.
 
 ## Later delivery units
 

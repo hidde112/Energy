@@ -1,6 +1,6 @@
 import { AppError } from "@/lib/errors/app-error";
 import { parsePublicEnv } from "@/lib/env/public";
-import { parseServerEnv } from "@/lib/env/server";
+import { parseAdminEnv, parseServerEnv } from "@/lib/env/server";
 
 const publicVariables = {
   NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
@@ -45,6 +45,18 @@ describe("runtime configuration", () => {
       ...publicVariables,
       SUPABASE_SERVICE_ROLE_KEY: "service-secret",
       OPENAI_API_KEY: "openai-secret",
+    });
+  });
+
+  it("can construct the Supabase admin client without an OpenAI key", () => {
+    expect(
+      parseAdminEnv({
+        ...publicVariables,
+        SUPABASE_SERVICE_ROLE_KEY: "service-secret",
+      }),
+    ).toEqual({
+      NEXT_PUBLIC_SUPABASE_URL: publicVariables.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: "service-secret",
     });
   });
 });

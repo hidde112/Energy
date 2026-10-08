@@ -11,6 +11,7 @@ import { AppError } from "@/lib/errors/app-error";
 import { toProblemDetails } from "@/lib/errors/problem-details";
 import { DatabaseRateLimiter } from "@/lib/rate-limit/database-rate-limiter";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import {
   E2E_SCAN_COOKIE,
   E2E_USER_COOKIE,
@@ -88,12 +89,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const admin = createAdminSupabaseClient();
     const service = new IdentificationService({
       catalog: new SupabaseCatalogRepository(client),
       productData: new OpenFoodFactsProvider(),
       vision: new OpenAiVisionProvider(),
-      cache: new SupabaseScanCache(client),
-      rateLimiter: new DatabaseRateLimiter(client),
+      cache: new SupabaseScanCache(admin),
+      rateLimiter: new DatabaseRateLimiter(admin),
     });
     const result = await service.identify(
       auth.data.user.id,

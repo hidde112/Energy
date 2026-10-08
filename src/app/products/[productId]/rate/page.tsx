@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import type { Review } from "@/features/reviews/domain/rating";
 import { RatingForm } from "@/features/reviews/components/rating-form";
 import { SupabaseCatalogRepository } from "@/features/catalog/server/supabase-catalog-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -23,7 +22,7 @@ export default async function RateProductPage({
   const { productId } = await params;
   if (isE2EMode()) {
     if (productId !== E2E_PRODUCT_ID) notFound();
-    const review = decodeFixture<Review>(
+    const review = decodeFixture<{ rating: number }>(
       (await cookies()).get(E2E_REVIEW_COOKIE)?.value,
     );
     return (

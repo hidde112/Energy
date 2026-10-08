@@ -55,6 +55,85 @@ describe("ScanResult", () => {
     expect(screen.getByLabelText(/product name/i)).toBeRequired();
   });
 
+  it("shows sourced external barcode data instead of blank correction fields", async () => {
+    const confirm = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        scanId: result("high").scanId,
+        productId: "new-product",
+        collectionId: "collection-1",
+        tastingSessionId: null,
+        reviewId: null,
+        provisional: true,
+      },
+    });
+    const identification: IdentificationResult = {
+      ...result("high"),
+      source: "external_barcode",
+      candidates: [],
+      externalProduct: {
+        barcode: { value: "12345670", format: "EAN-8" },
+        name: "Night Charge",
+        brand: "Pulse Labs",
+        sizeMl: 330,
+        imageUrl: null,
+        ingredients: "Water",
+        caffeineMgPer100Ml: 32,
+        sugarGPer100Ml: 10,
+        caloriesPer100Ml: 42,
+        source: {
+          provider: "open_food_facts",
+          url: "https://world.openfoodfacts.org/product/12345670",
+          license: "ODbL 1.0",
+          recordId: "12345670",
+        },
+      },
+    };
+    const user = userEvent.setup();
+    render(<ScanResult identification={identification} onConfirm={confirm} />);
+
+    expect(screen.getByText("Night Charge")).toBeInTheDocument();
+    expect(screen.getByText(/pulse labs/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/brand name/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /confirm product/i }));
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        confirmation: expect.objectContaining({
+          provisionalProduct: expect.objectContaining({
+            sourceKind: "open_food_facts",
+            barcode: "12345670",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("lets the user choose an explicit collection status", async () => {
+    const confirm = vi.fn().mockResolvedValue({
+      ok: false,
+      error: {
+        type: "test",
+        title: "stop",
+        status: 500,
+        code: "UNEXPECTED",
+        correlationId: "test",
+      },
+    });
+    const user = userEvent.setup();
+    render(<ScanResult identification={result("high")} onConfirm={confirm} />);
+
+    await user.selectOptions(
+      screen.getByLabelText(/collection status/i),
+      "favorite",
+    );
+    await user.click(screen.getByRole("button", { name: /confirm product/i }));
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        confirmation: expect.objectContaining({ collectionStatus: "favorite" }),
+      }),
+    );
+  });
+
   it("never shows success after failed persistence and blocks double submit", async () => {
     let resolve: ((value: ActionResult<ConfirmedScan>) => void) | undefined;
     const confirm = vi.fn(

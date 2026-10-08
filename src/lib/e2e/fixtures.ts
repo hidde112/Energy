@@ -4,7 +4,10 @@ import type {
   ProductDetail,
   ProductSummary,
 } from "@/features/catalog/domain/types";
-import type { CollectionListItem } from "@/features/collection/domain/collection";
+import type {
+  CollectionListItem,
+  CollectionStatus,
+} from "@/features/collection/domain/collection";
 import type { Profile } from "@/features/identity/contracts";
 import type { IdentificationResult } from "@/features/scanner/server/identification-service";
 
@@ -174,11 +177,13 @@ export function fixtureProfile(
   };
 }
 
-export function fixtureCollection(): CollectionListItem[] {
+export function fixtureCollection(
+  status: CollectionStatus = "tried",
+): CollectionListItem[] {
   return [
     {
       id: "40000000-0000-0000-0000-000000000001",
-      status: "tried",
+      status,
       note: null,
       product: fixtureProduct,
     },

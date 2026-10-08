@@ -1063,12 +1063,49 @@ a {
   font-size: 0.82rem;
 }
 
+.scan-result > label {
+  font-weight: 800;
+}
+
+.scan-result > select {
+  min-height: 3rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit;
+}
+
+.external-match {
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--cyan) 8%, transparent);
+}
+
+.external-match h2,
+.external-match p {
+  margin: 0.25rem 0;
+}
+
+.external-match small {
+  color: var(--text-muted);
+}
+
 .confirmation-success {
   margin-top: 2rem;
   padding: 2rem;
   border: 1px solid rgba(185, 255, 56, 0.35);
   border-radius: 1.5rem;
   background: rgba(185, 255, 56, 0.08);
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1rem;
 }
 
 .moderation-list {

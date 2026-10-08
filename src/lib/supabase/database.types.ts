@@ -552,6 +552,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      rating_mutations: {
+        Row: {
+          created_at: string;
+          id: string;
+          idempotency_key: string;
+          result: NonNullable<Json>;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          idempotency_key: string;
+          result: NonNullable<Json>;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          idempotency_key?: string;
+          result?: NonNullable<Json>;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       reviews: {
         Row: {
           aftertaste_rating: number | null;
@@ -614,11 +639,11 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "reviews_tasting_session_id_fkey";
-            columns: ["tasting_session_id"];
+            foreignKeyName: "reviews_tasting_owner_product_fkey";
+            columns: ["tasting_session_id", "user_id", "product_id"];
             isOneToOne: false;
             referencedRelation: "tasting_sessions";
-            referencedColumns: ["id"];
+            referencedColumns: ["id", "user_id", "product_id"];
           },
         ];
       };
@@ -905,6 +930,10 @@ export type Database = {
         Returns: Json;
       };
       is_moderator: { Args: Record<PropertyKey, never>; Returns: boolean };
+      save_rating: {
+        Args: { p_idempotency_key: string; p_input: Json; p_user_id: string };
+        Returns: Json;
+      };
     };
     Enums: {
       app_role: "user" | "moderator" | "admin";

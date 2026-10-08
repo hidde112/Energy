@@ -101,17 +101,20 @@ export class OpenAiVisionProvider implements VisionProvider {
   private readonly apiKey: string;
   private readonly client: VisionModelClient | null;
   private readonly model: string;
+  private readonly timeoutMs: number;
 
   constructor(
     options: {
       apiKey?: string;
       client?: VisionModelClient;
       model?: string;
+      timeoutMs?: number;
     } = {},
   ) {
     this.apiKey = options.apiKey ?? process.env.OPENAI_API_KEY ?? "";
     this.client = options.client ?? null;
     this.model = options.model ?? "gpt-5-mini";
+    this.timeoutMs = options.timeoutMs ?? 15_000;
   }
 
   async identify(
@@ -127,15 +130,26 @@ export class OpenAiVisionProvider implements VisionProvider {
 
     const client =
       this.client ?? new OpenAiResponsesClient(this.apiKey, this.model);
+    const controller = new AbortController();
+    const relayAbort = () => controller.abort(signal.reason);
+    if (signal.aborted) relayAbort();
+    else signal.addEventListener("abort", relayAbort, { once: true });
+    const timeout = setTimeout(
+      () => controller.abort("provider-timeout"),
+      this.timeoutMs,
+    );
     let output: string;
     try {
-      output = await client.identify(image, signal);
+      output = await client.identify(image, controller.signal);
     } catch (error) {
       throw new AppError(
         "PROVIDER_UNAVAILABLE",
         "Vision identification is temporarily unavailable.",
         { cause: error },
       );
+    } finally {
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", relayAbort);
     }
 
     try {

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parsePublicEnv } from "@/lib/env/public";
+import { toProblemDetails } from "@/lib/errors/problem-details";
 import type { Database } from "@/lib/supabase/database.types";
 
 export async function proxy(request: NextRequest) {
@@ -21,7 +22,17 @@ export async function proxy(request: NextRequest) {
     }
     return response;
   }
-  const configuration = parsePublicEnv(process.env);
+  let configuration: ReturnType<typeof parsePublicEnv>;
+  try {
+    configuration = parsePublicEnv(process.env);
+  } catch (error) {
+    if (request.nextUrl.pathname === "/setup") return response;
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      const problem = toProblemDetails(error, crypto.randomUUID());
+      return NextResponse.json(problem, { status: problem.status });
+    }
+    return NextResponse.redirect(new URL("/setup", request.url));
+  }
   const client = createServerClient<Database>(
     configuration.NEXT_PUBLIC_SUPABASE_URL,
     configuration.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,

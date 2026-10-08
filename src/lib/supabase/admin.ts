@@ -1,11 +1,11 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
-import { parseServerEnv } from "@/lib/env/server";
+import { parseAdminEnv } from "@/lib/env/server";
 import type { Database } from "@/lib/supabase/database.types";
 
 export function createAdminSupabaseClient() {
-  const configuration = parseServerEnv(process.env);
+  const configuration = parseAdminEnv(process.env);
 
   return createClient<Database>(
     configuration.NEXT_PUBLIC_SUPABASE_URL,

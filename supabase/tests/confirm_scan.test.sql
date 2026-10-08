@@ -13,23 +13,37 @@ insert into auth.users (
   'authenticated', 'authenticated', 'confirm@example.test', '{}', '{}', true, now(), now()
 );
 
-insert into public.scans (id, user_id, status, input_kind, barcode, idempotency_key)
+insert into public.scans (
+  id, user_id, status, input_kind, barcode, idempotency_key,
+  matched_product_id, provider_usage
+)
 values
   (
     '52000000-0000-0000-0000-000000000001',
     '51000000-0000-0000-0000-000000000001',
-    'identified', 'barcode', '9002490100070', 'identify-existing'
+    'identified', 'barcode', '9002490100070', 'identify-existing',
+    '30000000-0000-0000-0000-000000000001', '{}'::jsonb
   ),
   (
     '52000000-0000-0000-0000-000000000002',
     '51000000-0000-0000-0000-000000000001',
-    'identified', 'image', null, 'identify-new'
+    'identified', 'image', null, 'identify-new', null,
+    '{"result":{"requiresCorrection":true}}'::jsonb
   ),
   (
     '52000000-0000-0000-0000-000000000003',
     '51000000-0000-0000-0000-000000000001',
-    'identified', 'barcode', '9002490100070', 'identify-conflict'
+    'identified', 'barcode', '9002490100070', 'identify-conflict', null,
+    '{"result":{"requiresCorrection":true}}'::jsonb
   );
+
+insert into public.scan_candidates (
+  scan_id, product_id, position, score, confidence
+) values (
+  '52000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
+  1, 1, 'high'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '51000000-0000-0000-0000-000000000001', true);
@@ -88,7 +102,6 @@ select lives_ok(
           "barcode": "12345670",
           "barcode_format": "EAN-8",
           "source_kind": "user",
-          "source_url": "https://example.test/night-charge",
           "field_names": ["brand", "name", "size_ml"]
         },
         "collection_status": "want_to_try"

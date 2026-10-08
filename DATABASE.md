@@ -1,6 +1,6 @@
 # Database and security model
 
-Supabase PostgreSQL is the system of record. Four ordered migrations define the
+Supabase PostgreSQL is the system of record. Five ordered migrations define the
 core release:
 
 1. `202610080001_core_schema.sql` — enums, profiles/settings/roles, sourced
@@ -12,6 +12,9 @@ core release:
    user photos, MIME/size constraints, and object ownership policies.
 4. `202610080004_confirm_scan_and_moderation.sql` — idempotent atomic scan
    confirmation and audited provisional-product correction RPCs.
+5. `202610080005_security_and_workflow_hardening.sql` — service-owned scan
+   persistence, strict confirmation provenance, null-safe product identity, and
+   atomic idempotent rating/tasting mutations.
 
 `supabase/seed.sql` supplies a small sourced catalog for local development.
 
@@ -22,8 +25,13 @@ core release:
 - Barcode values are unique and normalized before lookup.
 - Provisional products require provenance and cannot be silently marked verified.
 - Catalog moderation requires a moderator/admin role and writes an audit record.
-- `confirm_scan` verifies ownership and applies product, collection, tasting,
-  review, and idempotency changes in one transaction.
+- `confirm_scan` verifies ownership and the server-persisted candidate/source,
+  then applies product, collection, tasting, review, and idempotency changes in
+  one transaction.
+- `save_rating` owns the optional tasting and current-review write in one
+  transaction and rejects cross-user or cross-product tasting references.
+- Browser clients cannot directly mutate scans, candidates, rate-limit events,
+  tastings, or reviews; scoped server/RPC paths own those writes.
 - The service-role key is never shipped to the browser.
 
 ## Migration workflow
@@ -38,7 +46,8 @@ npm run test:db
 ```
 
 The pgTAP suite covers schema constraints, RLS policies and cross-user denial,
-storage boundaries, idempotent confirmation, and moderation authorization.
+storage boundaries, hardened scan provenance, idempotent confirmation, atomic
+rating writes, and moderation authorization.
 
 After schema changes, regenerate checked-in application types:
 

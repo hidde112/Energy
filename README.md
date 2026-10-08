@@ -34,13 +34,15 @@ hosted Supabase, and Vercel instructions.
 npm run verify       # formatting, lint, types, unit, DB, E2E, production build
 npm run verify:app   # app checks without Docker-backed database tests
 npm run test:db      # pgTAP schema, RLS, ownership, and RPC checks
-npm run test:e2e     # deterministic browser journeys; never calls live providers
-npm run test:smoke-live # read-only hosted service/deployment checks
+npm run test:e2e     # deterministic UI-contract journeys; never calls live providers
+npm run test:smoke-live # credentialed hosted Auth/RLS/RPC smoke test
 ```
 
 The E2E suite enables an explicit test-only provider with `ENERGYDEX_E2E=1` in
-the Playwright-managed process. Do not enable this variable in a deployed
-environment.
+the Playwright-managed process. It proves browser journeys and persistence
+contracts, not hosted Supabase integration. Do not enable this variable in a
+deployed environment. The hosted smoke test creates and then removes a temporary
+anonymous user and catalog records; run it only against a prepared environment.
 
 ## Documentation
 

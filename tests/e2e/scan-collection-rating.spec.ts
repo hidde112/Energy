@@ -9,22 +9,29 @@ test("manual barcode confirms into collection and accepts a current rating", asy
   await expect(page).toHaveURL(/\/scan\/[0-9a-f-]+$/u);
   await expect(page.getByText("Red Bull Energy Drink")).toBeVisible();
 
+  await page.getByLabel(/collection status/i).selectOption("favorite");
   await page.getByRole("button", { name: /confirm product/i }).click();
   await expect(page.getByRole("status")).toContainText(
     /added to your collection/i,
   );
 
-  await page.goto("/collection");
-  await expect(page.getByText("Red Bull Energy Drink")).toBeVisible();
-  await page.reload();
-  await expect(page.getByText("Red Bull Energy Drink")).toBeVisible();
-  await page.goto("/products/30000000-0000-0000-0000-000000000001/rate");
+  await page.getByRole("link", { name: /rate this drink/i }).click();
+  await expect(page).toHaveURL(
+    /\/products\/30000000-0000-0000-0000-000000000001\/rate$/u,
+  );
   await page.getByLabel(/overall rating/i).fill("8.5");
   await page.getByLabel(/record a new tasting/i).check();
   await page.getByRole("button", { name: /save rating/i }).click();
   await expect(page.getByRole("status")).toHaveText(/rating saved/i);
   await page.reload();
   await expect(page.getByLabel(/overall rating/i)).toHaveValue("8.5");
+
+  await page.goto("/collection");
+  await expect(page.getByText("Red Bull Energy Drink")).toBeVisible();
+  await expect(page.getByLabel("Current status")).toHaveText("Favorite");
+  await page.reload();
+  await expect(page.getByText("Red Bull Energy Drink")).toBeVisible();
+  await expect(page.getByLabel("Current status")).toHaveText("Favorite");
 });
 
 test("confirmation retry with the same key is idempotent", async ({

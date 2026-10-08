@@ -64,10 +64,16 @@ timeouts, validation, and user-facing fallback errors; see `AI_PIPELINE.md`.
 4. Add each Vercel origin to the Supabase Auth redirect allow-list.
 5. Deploy, then set `ENERGYDEX_LIVE_BASE_URL` locally to the HTTPS deployment.
 6. Run `npm run test:smoke-live`. It checks the app, manifest, Supabase Auth,
-   REST, and OpenAI credential without issuing a paid vision request.
+   owner RLS, the confirmation RPC, and the OpenAI credential without issuing a
+   paid vision request. It creates a temporary anonymous user and catalog rows,
+   then removes them with the service-role credential.
 
 No hosted credentials are present in this repository, so live smoke testing is
 blocked until the project owner supplies those bindings.
+
+The Playwright suite is deliberately deterministic and uses a non-production
+cookie fixture when `ENERGYDEX_E2E=1`; it validates UI journeys but does not
+replace the credentialed hosted smoke test.
 
 ## Release checks
 

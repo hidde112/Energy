@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { ProductCard } from "@/features/catalog/components/product-card";
 import type { ProductDetail as ProductDetailType } from "@/features/catalog/domain/types";
 
@@ -40,6 +41,12 @@ export function ProductDetail({ product }: { product: ProductDetailType }) {
           />
         </dl>
         {product.description ? <p>{product.description}</p> : null}
+        <Link
+          className="button button-primary"
+          href={`/products/${product.id}/rate`}
+        >
+          Rate this drink
+        </Link>
       </section>
       <section className="source-list" aria-labelledby="sources-heading">
         <p className="eyebrow">Provenance</p>
